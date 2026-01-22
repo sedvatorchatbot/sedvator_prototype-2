@@ -32,11 +32,6 @@ const GRADES = [
   "10th Grade",
   "11th Grade",
   "12th Grade",
-  "College Freshman",
-  "College Sophomore",
-  "College Junior",
-  "College Senior",
-  "Graduate Student",
 ]
 
 const SUBJECTS = [

@@ -64,6 +64,19 @@ export async function POST(request: Request) {
       message.toLowerCase().includes("plan") ||
       message.toLowerCase().includes("timetable")
 
+    // Check if user is asking about the developer
+    const asksDeveloper =
+      message.toLowerCase().includes("who developed you") ||
+      message.toLowerCase().includes("who created you") ||
+      message.toLowerCase().includes("who is your developer") ||
+      message.toLowerCase().includes("who made you") ||
+      message.toLowerCase().includes("who built you") ||
+      message.toLowerCase().includes("who developed sedvator") ||
+      message.toLowerCase().includes("your creator") ||
+      message.toLowerCase().includes("your developer") ||
+      message.toLowerCase().includes("developed by") ||
+      message.toLowerCase().includes("created by")
+
     let searchResults: { title: string; url: string; snippet: string }[] = []
     let searchContext = ""
 
@@ -91,6 +104,8 @@ Your personality:
 ${needsMotivation ? "The student seems to be struggling emotionally. Be extra supportive and encouraging. Break down the problem into smaller, achievable steps. Remind them that struggling is part of learning." : ""}
 
 ${wantsRoutine ? "The student wants help creating a study routine or schedule. Ask about their goals, available time, and then provide a structured, realistic plan." : ""}
+
+${asksDeveloper ? "The student is asking about who developed you. Your developer is Anmol Ratan. Respond warmly by mentioning this." : ""}
 
 IMPORTANT: You DO have the ability to search the internet! When a student asks you to search for something, find books, look up information, or get recommendations, you CAN help them because the system will automatically search and provide you with results.
 ${searchContext}

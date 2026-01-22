@@ -72,6 +72,7 @@ export function ChatInterface({
   const recognitionRef = useRef<any>(null)
   const finalTranscriptRef = useRef("")
   const isStartingRef = useRef(false)
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -242,8 +243,10 @@ export function ChatInterface({
     setIsSpeaking(true)
 
     speechSynthesis.cancel()
+    utteranceRef.current = null
 
     const utterance = new SpeechSynthesisUtterance(text)
+    utteranceRef.current = utterance
     utterance.rate = 1.0
     utterance.pitch = 1.0
 
@@ -260,6 +263,11 @@ export function ChatInterface({
     utterance.onend = () => setIsSpeaking(false)
     utterance.onerror = () => setIsSpeaking(false)
     speechSynthesis.speak(utterance)
+  }
+
+  const stopSpeaking = () => {
+    speechSynthesis.cancel()
+    setIsSpeaking(false)
   }
 
   const startListening = useCallback(async () => {
@@ -309,6 +317,7 @@ export function ChatInterface({
 
     recognition.continuous = true
     recognition.interimResults = true
+    recognition.maxAlternatives = 1
     recognition.lang = "en-US"
 
     recognition.onstart = () => {
@@ -419,11 +428,6 @@ export function ChatInterface({
 
   const handleClearHistory = () => {
     setMessages([])
-  }
-
-  const stopSpeaking = () => {
-    speechSynthesis.cancel()
-    setIsSpeaking(false)
   }
 
   return (
@@ -614,7 +618,13 @@ export function ChatInterface({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={toggleVoiceReply}
+                    onClick={() => {
+                      if (isSpeaking) {
+                        stopSpeaking()
+                      } else {
+                        toggleVoiceReply()
+                      }
+                    }}
                     className={
                       voiceReplyEnabled
                         ? "text-cyan-400 hover:text-cyan-300"
@@ -625,7 +635,7 @@ export function ChatInterface({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {voiceReplyEnabled ? "Voice replies ON - Click to disable" : "Voice replies OFF - Click to enable"}
+                  {isSpeaking ? "Click to stop speaking" : voiceReplyEnabled ? "Voice replies ON - Click to disable" : "Voice replies OFF - Click to enable"}
                 </TooltipContent>
               </Tooltip>
 

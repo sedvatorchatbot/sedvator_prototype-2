@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   description:
     "Voice-activated AI chatbot that helps students learn smarter with personalized explanations, study routines, and resources.",
   generator: "v0.app",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
   icons: {
     icon: [
       {

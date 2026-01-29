@@ -519,8 +519,95 @@ export function ChatInterface({
             </div>
           </div>
 
-          {/* Theme Toggle - Right side */}
-          <ThemeToggle />
+          {/* Icon Shortcuts - Right side */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            {/* My Routine */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href="/routine" className="block">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-foreground h-8 w-8 sm:h-10 sm:w-10"
+                  >
+                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>My Routine</TooltipContent>
+            </Tooltip>
+
+            {/* Games & Quizzes */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href="/games" className="block">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-foreground h-8 w-8 sm:h-10 sm:w-10"
+                  >
+                    <Gamepad2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>Games & Quizzes</TooltipContent>
+            </Tooltip>
+
+            {/* Settings */}
+            {!isGuest && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowOnboarding(true)}
+                    className="text-muted-foreground hover:text-foreground h-8 w-8 sm:h-10 sm:w-10"
+                  >
+                    <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Settings</TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* Clear History */}
+            {!isGuest && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowClearConfirm(true)}
+                    disabled={messages.length === 0}
+                    className="text-muted-foreground hover:text-foreground h-8 w-8 sm:h-10 sm:w-10"
+                  >
+                    <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Clear History</TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* Disable/Enable History */}
+            {!isGuest && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => toggleChatHistory()}
+                    className="text-muted-foreground hover:text-foreground h-8 w-8 sm:h-10 sm:w-10"
+                  >
+                    <History className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{chatHistoryEnabled ? "Disable History" : "Enable History"}</TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
+          </div>
         </div>
       </div>
 

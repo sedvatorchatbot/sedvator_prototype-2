@@ -5,6 +5,7 @@ import { JarvisAvatar } from "@/components/jarvis-avatar"
 import { AnimatedLogo } from "@/components/animated-logo"
 import { MessageSquare, Search, Brain, Calendar, Gamepad2 } from "lucide-react"
 import { LightningCursor } from "@/components/lightning-cursor"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function LandingPage() {
   return (
@@ -24,6 +25,7 @@ export default function LandingPage() {
             <span className="text-lg sm:text-xl font-bold text-foreground ml-2 whitespace-nowrap">Sedvator AI</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <ThemeToggle />
             <Link href="/games">
               <Button variant="ghost" size="sm" className="text-xs sm:text-sm text-muted-foreground hover:text-foreground">
                 <Gamepad2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />

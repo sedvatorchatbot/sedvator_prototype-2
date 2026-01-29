@@ -1,37 +1,43 @@
 import { createClient } from "@/lib/supabase/server"
 import { ChatInterface } from "@/components/chat-interface"
-import { redirect } from "next/navigation"
 
 export default async function ChatPage() {
   const supabase = await createClient()
   const {
     data: { user },
-    error,
   } = await supabase.auth.getUser()
 
-  if (error || !user) {
-    redirect("/auth/login?redirectTo=/chat")
-  }
+  // Allow guest access - don't require authentication
+  const isGuest = !user || user.is_anonymous === true
 
-  const isGuest = user.is_anonymous === true
+  let profile = null
 
-  let { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()
-
-  if (!profile) {
-    const { data: newProfile } = await supabase
+  // Only fetch profile if user is authenticated
+  if (user && !isGuest) {
+    const { data: existingProfile } = await supabase
       .from("profiles")
-      .insert({
-        id: user.id,
-        email: user.email || `guest_${user.id.slice(0, 8)}@guest.local`,
-        name: isGuest ? "Guest User" : undefined,
-        grade: "",
-        subjects: [],
-        chat_history_enabled: !isGuest,
-      })
-      .select()
-      .single()
+      .select("*")
+      .eq("id", user.id)
+      .maybeSingle()
 
-    profile = newProfile
+    if (!existingProfile) {
+      const { data: newProfile } = await supabase
+        .from("profiles")
+        .insert({
+          id: user.id,
+          email: user.email,
+          name: undefined,
+          grade: "",
+          subjects: [],
+          chat_history_enabled: true,
+        })
+        .select()
+        .single()
+
+      profile = newProfile
+    } else {
+      profile = existingProfile
+    }
   }
 
   return <ChatInterface user={user} profile={profile} isGuest={isGuest} />

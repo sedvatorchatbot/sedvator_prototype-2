@@ -60,12 +60,20 @@ export default function LandingPage() {
                 learning resources, play educational games, and build effective study routines.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <Link href="/chat" className="w-full sm:w-auto">
+                  <Button
+                    size="lg"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white px-6 sm:px-8"
+                  >
+                    Try Now
+                  </Button>
+                </Link>
                 <Link href="/auth/sign-up" className="w-full sm:w-auto">
                   <Button
                     size="lg"
                     className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white px-6 sm:px-8"
                   >
-                    Start Learning
+                    Get Started
                   </Button>
                 </Link>
                 <Link href="#features" className="w-full sm:w-auto">

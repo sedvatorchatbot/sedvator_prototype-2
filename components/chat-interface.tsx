@@ -25,6 +25,8 @@ import {
   BrainCircuit,
   Trash2,
   UserPlus,
+  Menu,
+  X,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -67,6 +69,7 @@ export function ChatInterface({
   const [voiceReplyEnabled, setVoiceReplyEnabled] = useState(profile?.voice_enabled ?? true)
   const [transcript, setTranscript] = useState("")
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
@@ -438,6 +441,14 @@ export function ChatInterface({
   return (
     <TooltipProvider>
       <div className="flex h-screen flex-col bg-background">
+        {/* Mobile Overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Header */}
         <div className="border-b border-border bg-card/50 px-3 sm:px-6 py-3 sm:py-4">
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
@@ -505,24 +516,62 @@ export function ChatInterface({
                   )}
                 </div>
                 <div className="text-xs text-muted-foreground px-2">Click the microphone to speak</div>
-                {!isGuest && (
+
+                <div className="space-y-1 pt-2 border-t border-border">
+                  <Link href="/routine">
+                    <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+                      <Calendar className="mr-2 h-4 w-4" />
+                      My Routine
+                    </Button>
+                  </Link>
+                  <Link href="/games">
+                    <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+                      <Gamepad2 className="mr-2 h-4 w-4" />
+                      Games & Quizzes
+                    </Button>
+                  </Link>
+
+                  {!isGuest && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-muted-foreground hover:text-foreground"
+                        onClick={() => setShowClearConfirm(true)}
+                        disabled={messages.length === 0}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Clear History
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-muted-foreground hover:text-foreground"
+                        onClick={toggleChatHistory}
+                      >
+                        <History className="mr-2 h-4 w-4" />
+                        {chatHistoryEnabled ? "Disable History" : "Enable History"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-muted-foreground hover:text-foreground"
+                        onClick={() => setShowOnboarding(true)}
+                      >
+                        <Settings className="mr-2 h-4 w-4" />
+                        Settings
+                      </Button>
+                    </>
+                  )}
+                </div>
+
+                <div className="pt-2 border-t border-border">
                   <Button
                     variant="ghost"
-                    className="w-full justify-start text-muted-foreground hover:text-foreground"
-                    onClick={() => setShowOnboarding(true)}
+                    className="w-full justify-start text-muted-foreground hover:text-red-400"
+                    onClick={handleLogout}
                   >
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
+                    <LogOut className="mr-2 h-4 w-4" />
+                    {isGuest ? "Exit Guest Mode" : "Sign Out"}
                   </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-muted-foreground hover:text-foreground"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  {isGuest ? "Exit Guest Mode" : "Sign Out"}
-                </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -556,85 +605,13 @@ export function ChatInterface({
                   </Link>
                 )}
 
-                {/* Games Button */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link href="/games">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
-                      >
-                        <Gamepad2 className="h-5 w-5" />
-                      </Button>
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent>Fun Games</TooltipContent>
-                </Tooltip>
-
-                {/* Quiz Button */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link href="/games?tab=quiz">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
-                      >
-                        <BrainCircuit className="h-5 w-5" />
-                      </Button>
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent>Quizzes</TooltipContent>
-                </Tooltip>
-
-                {/* Clear History Button - only for non-guests */}
-                {!isGuest && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setShowClearConfirm(true)}
-                        disabled={messages.length === 0}
-                        className="text-muted-foreground hover:text-red-400 hover:bg-red-500/10 disabled:opacity-50"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Clear Chat History</TooltipContent>
-                  </Tooltip>
-                )}
-
-                {/* History Toggle - only for non-guests */}
-                {!isGuest && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={toggleChatHistory}
-                        className={
-                          chatHistoryEnabled
-                            ? "text-cyan-400 hover:text-cyan-300"
-                            : "text-muted-foreground hover:text-foreground"
-                        }
-                      >
-                        <History className="h-5 w-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {chatHistoryEnabled ? "Chat history ON - Click to disable" : "Chat history OFF - Click to enable"}
-                    </TooltipContent>
-                  </Tooltip>
-                )}
+                {/* Theme Toggle */}
+                <ThemeToggle />
 
                 {/* Voice Reply Toggle */}
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
-                      size="icon"
                       onClick={() => {
                         if (isSpeaking) {
                           stopSpeaking()
@@ -642,6 +619,8 @@ export function ChatInterface({
                           toggleVoiceReply()
                         }
                       }}
+                      variant="ghost"
+                      size="icon"
                       className={
                         voiceReplyEnabled
                           ? "text-cyan-400 hover:text-cyan-300"
@@ -652,31 +631,19 @@ export function ChatInterface({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    {isSpeaking ? "Click to stop speaking" : voiceReplyEnabled ? "Voice replies ON - Click to disable" : "Voice replies OFF - Click to enable"}
+                    {isSpeaking ? "Click to stop speaking" : voiceReplyEnabled ? "Voice replies ON" : "Voice replies OFF"}
                   </TooltipContent>
                 </Tooltip>
 
-                {/* Settings Button - only for non-guests */}
-                {!isGuest && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" onClick={() => setShowOnboarding(true)}>
-                        <Settings className="h-5 w-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Settings</TooltipContent>
-                  </Tooltip>
-                )}
-
-                {/* Logout Button */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={handleLogout}>
-                      <LogOut className="h-5 w-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{isGuest ? "Exit Guest Mode" : "Sign Out"}</TooltipContent>
-                </Tooltip>
+                {/* Menu Button - Opens sidebar on mobile */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="lg:hidden"
+                >
+                  {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </Button>
               </div>
             </header>
 

@@ -10,6 +10,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { AnimatedLogo } from "@/components/animated-logo"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("")
@@ -55,6 +56,11 @@ export default function SignUpPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">

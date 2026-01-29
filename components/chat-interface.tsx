@@ -9,6 +9,7 @@ import { JarvisAvatar } from "@/components/jarvis-avatar"
 import { MessageBubble } from "@/components/message-bubble"
 import { OnboardingModal } from "@/components/onboarding-modal"
 import { AnimatedLogo } from "@/components/animated-logo"
+import { ThemeToggle } from "@/components/theme-toggle"
 import {
   Send,
   Mic,
@@ -450,74 +451,79 @@ export function ChatInterface({
                 </p>
               </div>
             </div>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
 
-            {isGuest && (
-              <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                <p className="text-amber-400 text-sm font-medium mb-2">Guest Account</p>
-                <p className="text-xs text-muted-foreground mb-3">Sign up to save your chats and access all features.</p>
-                <Link href="/auth/sign-up">
-                  <Button size="sm" className="w-full bg-amber-500 hover:bg-amber-600 text-black">
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Create Account
+              {isGuest && (
+                <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                  <p className="text-amber-400 text-sm font-medium mb-2">Guest Account</p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Sign up to save your chats and access all features.
+                  </p>
+                  <Link href="/auth/sign-up">
+                    <Button size="sm" className="w-full bg-amber-500 hover:bg-amber-600 text-black">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Create Account
+                    </Button>
+                  </Link>
+                </div>
+              )}
+
+              <nav className="space-y-2">
+                <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+                  <span className="mr-2">💬</span> Chat
+                </Button>
+                <Link href="/routine">
+                  <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    My Routine
                   </Button>
                 </Link>
-              </div>
-            )}
+                <Link href="/games">
+                  <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+                    <Gamepad2 className="mr-2 h-4 w-4" />
+                    Games & Quizzes
+                  </Button>
+                </Link>
+              </nav>
 
-            <nav className="space-y-2">
-              <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
-                <span className="mr-2">💬</span> Chat
-              </Button>
-              <Link href="/routine">
-                <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  My Routine
-                </Button>
-              </Link>
-              <Link href="/games">
-                <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
-                  <Gamepad2 className="mr-2 h-4 w-4" />
-                  Games & Quizzes
-                </Button>
-              </Link>
-            </nav>
-
-            <div className="mt-auto space-y-2">
-              <div className="text-xs text-muted-foreground px-2">
-                {isGuest ? (
-                  <span className="text-amber-400">Chat history disabled for guests</span>
-                ) : chatHistoryEnabled ? (
-                  <span className="text-green-400">Chat history: ON</span>
-                ) : (
-                  <span className="text-yellow-400">Chat history: OFF</span>
+              <div className="mt-auto space-y-2">
+                <div className="text-xs text-muted-foreground px-2">
+                  {isGuest ? (
+                    <span className="text-amber-400">Chat history disabled for guests</span>
+                  ) : chatHistoryEnabled ? (
+                    <span className="text-green-400">Chat history: ON</span>
+                  ) : (
+                    <span className="text-yellow-400">Chat history: OFF</span>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground px-2">
+                  {voiceReplyEnabled ? (
+                    <span className="text-green-400">Voice reply: ON</span>
+                  ) : (
+                    <span className="text-yellow-400">Voice reply: OFF</span>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground px-2">Click the microphone to speak</div>
+                {!isGuest && (
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowOnboarding(true)}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </Button>
                 )}
-              </div>
-              <div className="text-xs text-muted-foreground px-2">
-                {voiceReplyEnabled ? (
-                  <span className="text-green-400">Voice reply: ON</span>
-                ) : (
-                  <span className="text-yellow-400">Voice reply: OFF</span>
-                )}
-              </div>
-              <div className="text-xs text-muted-foreground px-2">Click the microphone to speak</div>
-              {!isGuest && (
                 <Button
                   variant="ghost"
                   className="w-full justify-start text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowOnboarding(true)}
+                  onClick={handleLogout}
                 >
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {isGuest ? "Exit Guest Mode" : "Sign Out"}
                 </Button>
-              )}
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-muted-foreground hover:text-foreground"
-                onClick={handleLogout}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                {isGuest ? "Exit Guest Mode" : "Sign Out"}
-              </Button>
+              </div>
             </div>
           </div>
 
@@ -809,7 +815,7 @@ export function ChatInterface({
             onClearHistory={handleClearHistory}
           />
         </div>
-      </TooltipProvider>
-    </div>
+      </div>
+    </TooltipProvider>
   )
 }

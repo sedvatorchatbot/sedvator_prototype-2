@@ -163,11 +163,28 @@ export function ChatInterface({
       setIsLoading(true)
 
       try {
-        const attachments = selectedFiles.map((file) => ({
-          fileName: file.name,
-          fileType: file.type,
-          extractedText: "", // Will be populated by the API
-        }))
+        // Get the actual file data with extracted text from state
+        // We need to query the uploaded files to get their extracted text
+        const supabase = createClient()
+        const attachments = []
+        
+        if (selectedFiles.length > 0) {
+          // Fetch the most recently uploaded files for this user
+          const { data: uploadedFiles, error } = await supabase
+            .from('file_attachments')
+            .select('id, file_name, file_type, extracted_text')
+            .eq('user_id', user?.id || 'guest')
+            .order('created_at', { ascending: false })
+            .limit(selectedFiles.length)
+
+          if (!error && uploadedFiles) {
+            attachments.push(...uploadedFiles.map((file) => ({
+              fileName: file.file_name,
+              fileType: file.file_type,
+              extractedText: file.extracted_text || '',
+            })))
+          }
+        }
 
         const response = await fetch("/api/chat", {
           method: "POST",

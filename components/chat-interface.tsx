@@ -162,6 +162,12 @@ export function ChatInterface({
       setIsLoading(true)
 
       try {
+        const attachments = selectedFiles.map((file) => ({
+          fileName: file.name,
+          fileType: file.type,
+          extractedText: "", // Will be populated by the API
+        }))
+
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -170,6 +176,7 @@ export function ChatInterface({
             grade: userProfile?.grade,
             subjects: userProfile?.subjects,
             history: messages.slice(-10),
+            attachments: attachments.length > 0 ? attachments : undefined,
           }),
         })
 

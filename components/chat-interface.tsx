@@ -10,7 +10,6 @@ import { MessageBubble } from "@/components/message-bubble"
 import { OnboardingModal } from "@/components/onboarding-modal"
 import { AnimatedLogo } from "@/components/animated-logo"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { FileUploadButton, FilePreview } from "@/components/file-upload"
 import {
   Send,
   Mic,
@@ -62,8 +61,6 @@ export function ChatInterface({
   const [isLoading, setIsLoading] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
-  const [isUploadingFiles, setIsUploadingFiles] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(profile?.voice_enabled ?? true)
   const [chatHistoryEnabled, setChatHistoryEnabled] = useState(
     isGuest ? false : (profile?.chat_history_enabled ?? true),
@@ -74,6 +71,8 @@ export function ChatInterface({
   const [transcript, setTranscript] = useState("")
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
@@ -163,29 +162,6 @@ export function ChatInterface({
       setIsLoading(true)
 
       try {
-        // Get the actual file data with extracted text from state
-        // We need to query the uploaded files to get their extracted text
-        const supabase = createClient()
-        const attachments = []
-        
-        if (selectedFiles.length > 0) {
-          // Fetch the most recently uploaded files for this user
-          const { data: uploadedFiles, error } = await supabase
-            .from('file_attachments')
-            .select('id, file_name, file_type, extracted_text')
-            .eq('user_id', user?.id || 'guest')
-            .order('created_at', { ascending: false })
-            .limit(selectedFiles.length)
-
-          if (!error && uploadedFiles) {
-            attachments.push(...uploadedFiles.map((file) => ({
-              fileName: file.file_name,
-              fileType: file.file_type,
-              extractedText: file.extracted_text || '',
-            })))
-          }
-        }
-
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -194,7 +170,6 @@ export function ChatInterface({
             grade: userProfile?.grade,
             subjects: userProfile?.subjects,
             history: messages.slice(-10),
-            attachments: attachments.length > 0 ? attachments : undefined,
           }),
         })
 
@@ -462,44 +437,16 @@ export function ChatInterface({
     setMessages([])
   }
 
-  const handleFilesSelected = async (files: File[]) => {
-    setSelectedFiles((prev) => [...prev, ...files])
-    setIsUploadingFiles(true)
-
-    try {
-      const formData = new FormData()
-      files.forEach((file) => {
-        formData.append("files", file)
-      })
-      formData.append("userId", user?.id || "guest")
-
-      const response = await fetch("/api/files/upload", {
-        method: "POST",
-        body: formData,
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to upload files")
-      }
-
-      console.log("[v0] Files uploaded successfully:", data.attachments)
-    } catch (error) {
-      console.error("[v0] File upload error:", error)
-      setSelectedFiles([])
-    } finally {
-      setIsUploadingFiles(false)
-    }
-  }
-
-  const handleRemoveFile = (index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index))
-  }
-
   const handleSendMessage = () => {
     handleSend()
-    setSelectedFiles([])
+  }
+
+  const handleRemoveFile = (file: File) => {
+    setSelectedFiles((prevFiles) => prevFiles.filter((f) => f !== file))
+  }
+
+  const handleFilesSelected = (files: File[]) => {
+    setSelectedFiles((prevFiles) => [...prevFiles, ...files])
   }
 
   return (
@@ -792,69 +739,67 @@ export function ChatInterface({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <div className="border-t border-border bg-card/50 px-3 sm:px-6 py-3 sm:py-4">
-        <FilePreview files={selectedFiles} onRemove={handleRemoveFile} />
-        <div className="max-w-4xl mx-auto flex gap-2 sm:gap-3 items-end">
-          <FileUploadButton onFilesSelected={handleFilesSelected} isLoading={isUploadingFiles} />
-          <Input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage()}
-            placeholder={isListening ? "🎤 Listening..." : "Type or click mic..."}
-            disabled={isLoading || isUploadingFiles}
-            className="flex-1 resize-none text-sm"
-          />
-          <Button
-            onClick={() => startListening()}
-            disabled={isLoading || isUploadingFiles}
-            size="sm"
-            variant={isListening ? "default" : "outline"}
-            className="flex-shrink-0"
-          >
-            {isListening ? <MicOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Mic className="h-4 w-4 sm:h-5 sm:w-5" />}
-          </Button>
+        {/* Input Area */}
+        <div className="border-t border-border bg-card/50 px-3 sm:px-6 py-3 sm:py-4">
+          <div className="max-w-4xl mx-auto flex gap-2 sm:gap-3 items-end">
+            <Input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage()}
+              placeholder={isListening ? "🎤 Listening..." : "Type or click mic..."}
+              disabled={isLoading}
+              className="flex-1 resize-none text-sm"
+            />
+            <Button
+              onClick={() => startListening()}
+              disabled={isLoading}
+              size="sm"
+              variant={isListening ? "default" : "outline"}
+              className="flex-shrink-0"
+            >
+              {isListening ? <MicOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Mic className="h-4 w-4 sm:h-5 sm:w-5" />}
+            </Button>
 
-          {/* Voice Reply Toggle */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={() => {
-                    if (isSpeaking) {
-                      stopSpeaking()
-                    } else {
-                      toggleVoiceReply()
+            {/* Voice Reply Toggle */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => {
+                      if (isSpeaking) {
+                        stopSpeaking()
+                      } else {
+                        toggleVoiceReply()
+                      }
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className={
+                      voiceReplyEnabled
+                        ? "text-cyan-400 hover:text-cyan-300"
+                        : "text-muted-foreground hover:text-foreground"
                     }
-                  }}
-                  variant="ghost"
-                  size="sm"
-                  className={
-                    voiceReplyEnabled
-                      ? "text-cyan-400 hover:text-cyan-300"
-                      : "text-muted-foreground hover:text-foreground"
-                  }
-                >
-                  {voiceReplyEnabled ? <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {isSpeaking ? "Click to stop speaking" : voiceReplyEnabled ? "Voice replies ON" : "Voice replies OFF"}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+                  >
+                    {voiceReplyEnabled ? <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isSpeaking ? "Click to stop speaking" : voiceReplyEnabled ? "Voice replies ON" : "Voice replies OFF"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
-          <Button
-            onClick={handleSendMessage}
-            disabled={isLoading || isUploadingFiles || (!input.trim() && selectedFiles.length === 0)}
-            size="sm"
-            className="flex-shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
-          >
-            <Send className="h-4 w-4 sm:h-5 sm:w-5" />
-          </Button>
+            <Button
+              onClick={handleSendMessage}
+              disabled={isLoading || !input.trim()}
+              size="sm"
+              className="flex-shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
+            >
+              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+            </Button>
+          </div>
         </div>
-      </div>
 
       {/* Clear History Confirmation Modal */}
       {showClearConfirm && (

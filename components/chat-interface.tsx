@@ -772,29 +772,29 @@ export function ChatInterface({
         {/* Input Area */}
         <div className="border-t border-border bg-card/50 px-3 sm:px-6 py-3 sm:py-4">
           <FilePreview files={selectedFiles} onRemove={handleRemoveFile} />
-          <div className="max-w-4xl mx-auto flex gap-2 sm:gap-3 items-end">
-            <FileUploadButton onFilesSelected={handleFilesSelected} isLoading={isUploadingFiles} />
-            <Input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage()}
-              placeholder={isListening ? "🎤 Listening..." : "Type or click mic..."}
-              disabled={isLoading || isUploadingFiles}
-              className="flex-1 resize-none text-sm"
-            />
-            <Button
-              onClick={() => startListening()}
-              disabled={isLoading || isUploadingFiles}
-              size="sm"
-              variant={isListening ? "default" : "outline"}
-              className="flex-shrink-0"
-            >
-              {isListening ? <MicOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Mic className="h-4 w-4 sm:h-5 sm:w-5" />}
-            </Button>
+          <TooltipProvider>
+            <div className="max-w-4xl mx-auto flex gap-2 sm:gap-3 items-end">
+              <FileUploadButton onFilesSelected={handleFilesSelected} isLoading={isUploadingFiles} />
+              <Input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage()}
+                placeholder={isListening ? "🎤 Listening..." : "Type or click mic..."}
+                disabled={isLoading || isUploadingFiles}
+                className="flex-1 resize-none text-sm"
+              />
+              <Button
+                onClick={() => startListening()}
+                disabled={isLoading || isUploadingFiles}
+                size="sm"
+                variant={isListening ? "default" : "outline"}
+                className="flex-shrink-0"
+              >
+                {isListening ? <MicOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Mic className="h-4 w-4 sm:h-5 sm:w-5" />}
+              </Button>
 
-            {/* Voice Reply Toggle */}
-            <TooltipProvider>
+              {/* Voice Reply Toggle */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -820,17 +820,17 @@ export function ChatInterface({
                   {isSpeaking ? "Click to stop speaking" : voiceReplyEnabled ? "Voice replies ON" : "Voice replies OFF"}
                 </TooltipContent>
               </Tooltip>
-            </TooltipProvider>
 
-            <Button
-              onClick={handleSendMessage}
-              disabled={isLoading || isUploadingFiles || (!input.trim() && selectedFiles.length === 0)}
-              size="sm"
-              className="flex-shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
-            >
-              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
-          </div>
+              <Button
+                onClick={handleSendMessage}
+                disabled={isLoading || isUploadingFiles || (!input.trim() && selectedFiles.length === 0)}
+                size="sm"
+                className="flex-shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
+              >
+                <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
+            </div>
+          </TooltipProvider>
         </div>
       </div>
 

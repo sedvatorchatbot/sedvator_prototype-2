@@ -454,7 +454,6 @@ export function ChatInterface({
         formData.append("files", file)
       })
       formData.append("userId", user?.id || "guest")
-      formData.append("messageId", `temp-${Date.now()}`)
 
       const response = await fetch("/api/files/upload", {
         method: "POST",

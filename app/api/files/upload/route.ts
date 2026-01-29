@@ -17,14 +17,14 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const files = formData.getAll('files') as File[]
     const userId = formData.get('userId') as string
-    const messageId = formData.get('messageId') as string
+    const messageId = formData.get('messageId') as string | null
 
     if (!files || files.length === 0) {
       return NextResponse.json({ error: 'No files provided' }, { status: 400 })
     }
 
-    if (!userId || !messageId) {
-      return NextResponse.json({ error: 'Missing userId or messageId' }, { status: 400 })
+    if (!userId) {
+      return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
     }
 
     const fileAttachments: any[] = []
@@ -77,11 +77,11 @@ export async function POST(request: NextRequest) {
         extractedText = `[File: ${file.name}]\nFailed to extract text. Size: ${(file.size / 1024 / 1024).toFixed(2)} MB`
       }
 
-      // Store file attachment in database
+      // Store file attachment in database (message_id is optional for now)
       const { data, error } = await supabase
         .from('file_attachments')
         .insert({
-          message_id: messageId,
+          message_id: messageId || null,
           user_id: userId,
           file_name: file.name,
           file_type: fileType,

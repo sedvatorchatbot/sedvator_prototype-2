@@ -50,7 +50,16 @@ export default function SignUpPage() {
         throw new Error(data.error || "Sign up failed")
       }
 
-      router.push("/auth/sign-up-success")
+      // Wait a bit for the session cookie to be set on mobile
+      await new Promise((resolve) => setTimeout(resolve, 500))
+      
+      // Use replace instead of push to prevent back button issues
+      router.replace("/auth/sign-up-success")
+      
+      // Force a page refresh after a short delay to ensure session is loaded
+      setTimeout(() => {
+        window.location.href = "/auth/sign-up-success"
+      }, 100)
     } catch (error: unknown) {
       console.error("[v0] Sign up error:", error)
       const errorMessage = error instanceof Error ? error.message : "An error occurred during sign up"

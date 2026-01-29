@@ -10,6 +10,7 @@ import { MessageBubble } from "@/components/message-bubble"
 import { OnboardingModal } from "@/components/onboarding-modal"
 import { AnimatedLogo } from "@/components/animated-logo"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { FileUploadButton, FilePreview } from "@/components/file-upload"
 import {
   Send,
   Mic,
@@ -60,6 +61,8 @@ export function ChatInterface({
   const [isLoading, setIsLoading] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(profile?.voice_enabled ?? true)
   const [chatHistoryEnabled, setChatHistoryEnabled] = useState(
     isGuest ? false : (profile?.chat_history_enabled ?? true),
@@ -434,8 +437,45 @@ export function ChatInterface({
     setMessages([])
   }
 
+  const handleFilesSelected = async (files: File[]) => {
+    setSelectedFiles((prev) => [...prev, ...files])
+    setIsUploadingFiles(true)
+
+    try {
+      const formData = new FormData()
+      files.forEach((file) => {
+        formData.append("files", file)
+      })
+      formData.append("userId", user?.id || "guest")
+      formData.append("messageId", `temp-${Date.now()}`)
+
+      const response = await fetch("/api/files/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to upload files")
+      }
+
+      console.log("[v0] Files uploaded successfully:", data.attachments)
+    } catch (error) {
+      console.error("[v0] File upload error:", error)
+      setSelectedFiles([])
+    } finally {
+      setIsUploadingFiles(false)
+    }
+  }
+
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index))
+  }
+
   const handleSendMessage = () => {
     handleSend()
+    setSelectedFiles([])
   }
 
   return (
@@ -720,19 +760,21 @@ export function ChatInterface({
 
             {/* Input Area */}
             <div className="border-t border-border bg-card/50 px-3 sm:px-6 py-3 sm:py-4">
+              <FilePreview files={selectedFiles} onRemove={handleRemoveFile} />
               <div className="max-w-4xl mx-auto flex gap-2 sm:gap-3 items-end">
+                <FileUploadButton onFilesSelected={handleFilesSelected} isLoading={isUploadingFiles} />
                 <Input
                   ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage()}
                   placeholder={isListening ? "🎤 Listening..." : "Type or click mic..."}
-                  disabled={isLoading}
+                  disabled={isLoading || isUploadingFiles}
                   className="flex-1 resize-none text-sm"
                 />
                 <Button
                   onClick={() => startListening()}
-                  disabled={isLoading}
+                  disabled={isLoading || isUploadingFiles}
                   size="sm"
                   variant={isListening ? "default" : "outline"}
                   className="flex-shrink-0"
@@ -741,7 +783,7 @@ export function ChatInterface({
                 </Button>
                 <Button
                   onClick={handleSendMessage}
-                  disabled={isLoading || !input.trim()}
+                  disabled={isLoading || isUploadingFiles || (!input.trim() && selectedFiles.length === 0)}
                   size="sm"
                   className="flex-shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
                 >

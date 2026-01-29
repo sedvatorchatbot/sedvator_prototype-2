@@ -11,15 +11,26 @@ interface ChatRequest {
   grade?: string
   subjects?: string[]
   history?: Message[]
+  attachments?: { fileName: string; fileType: string; extractedText: string }[]
 }
 
 export async function POST(request: Request) {
   try {
-    const { message, grade, subjects, history }: ChatRequest = await request.json()
+    const { message, grade, subjects, history, attachments }: ChatRequest = await request.json()
 
     // Build context based on user's profile
     const gradeContext = grade ? `The student is in ${grade}.` : ""
     const subjectsContext = subjects?.length ? `They are studying: ${subjects.join(", ")}.` : ""
+
+    // Build file context
+    let fileContext = ""
+    if (attachments && attachments.length > 0) {
+      fileContext = "\n\nUser has uploaded the following files for analysis:\n"
+      attachments.forEach((attachment) => {
+        fileContext += `\n📎 File: ${attachment.fileName} (${attachment.fileType})\n`
+        fileContext += `Content Preview:\n${attachment.extractedText.substring(0, 2000)}\n`
+      })
+    }
 
     // Check for motivation/mood keywords
     const moodKeywords = [
@@ -106,6 +117,8 @@ ${needsMotivation ? "The student seems to be struggling emotionally. Be extra su
 ${wantsRoutine ? "The student wants help creating a study routine or schedule. Ask about their goals, available time, and then provide a structured, realistic plan." : ""}
 
 ${asksDeveloper ? "The student is asking about who developed you. Your developer is Anmol Ratan. Respond warmly by mentioning this." : ""}
+
+${fileContext ? `File Analysis Instructions:\n${fileContext}\n\nAnalyze the provided files thoroughly. Extract key information, answer questions about their content, and provide insights. Remember this content for the rest of the conversation to provide better context-aware responses.` : ""}
 
 IMPORTANT: You DO have the ability to search the internet! When a student asks you to search for something, find books, look up information, or get recommendations, you CAN help them because the system will automatically search and provide you with results.
 ${searchContext}

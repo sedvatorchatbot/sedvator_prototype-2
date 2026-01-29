@@ -490,7 +490,7 @@ export function ChatInterface({
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-30"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -522,26 +522,157 @@ export function ChatInterface({
           {/* Right side - Theme Toggle */}
           <div className="flex items-center gap-2">
             <ThemeToggle />
+          </div>
+        </div>
+      </div>
 
-            {isGuest && (
-              <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                <p className="text-amber-400 text-sm font-medium mb-2">Guest Account</p>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Sign up to save your chats and access all features.
-                </p>
-                <Link href="/auth/sign-up">
-                  <Button size="sm" className="w-full bg-amber-500 hover:bg-amber-600 text-black">
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Create Account
-                  </Button>
-                </Link>
-              </div>
-            )}
-
-            <nav className="space-y-2">
+      <div className="absolute inset-0 flex">
+        {/* Navigation Drawer - Slides in from left (1/4 page width) */}
+        <div
+          className={`fixed inset-y-0 left-0 w-64 bg-card border-r border-border transform transition-transform duration-300 ease-in-out z-40 ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } flex flex-col overflow-y-auto pt-20`}
+        >
+          {/* Navigation Menu */}
+          <nav className="space-y-2 px-4 flex-1">
+            <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+              <span className="mr-2">💬</span> Chat
+            </Button>
+            <Link href="/routine" onClick={() => setSidebarOpen(false)}>
               <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
-                <span className="mr-2">💬</span> Chat
+                <Calendar className="mr-2 h-4 w-4" />
+                My Routine
               </Button>
+            </Link>
+            <Link href="/games" onClick={() => setSidebarOpen(false)}>
+              <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+                <Gamepad2 className="mr-2 h-4 w-4" />
+                Games & Quizzes
+              </Button>
+            </Link>
+
+            {!isGuest && (
+              <>
+                <div className="pt-2 border-t border-border">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      setShowClearConfirm(true)
+                      setSidebarOpen(false)
+                    }}
+                    disabled={messages.length === 0}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Clear History
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      toggleChatHistory()
+                      setSidebarOpen(false)
+                    }}
+                  >
+                    <History className="mr-2 h-4 w-4" />
+                    {chatHistoryEnabled ? "Disable History" : "Enable History"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      setShowOnboarding(true)
+                      setSidebarOpen(false)
+                    }}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </Button>
+                </div>
+              </>
+            )}
+          </nav>
+
+          {/* Footer Options */}
+          <div className="border-t border-border p-4 space-y-2">
+            {isGuest ? (
+              <Link href="/auth/sign-up" onClick={() => setSidebarOpen(false)}>
+                <Button size="sm" className="w-full bg-amber-500 hover:bg-amber-600 text-black">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Create Account
+                </Button>
+              </Link>
+            ) : null}
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground hover:text-red-400"
+              onClick={() => {
+                handleLogout()
+                setSidebarOpen(false)
+              }}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              {isGuest ? "Exit Guest Mode" : "Sign Out"}
+            </Button>
+          </div>
+        </div>
+        {/* Right side - Theme Toggle */}
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+
+          {isGuest && (
+            <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+              <p className="text-amber-400 text-sm font-medium mb-2">Guest Account</p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Sign up to save your chats and access all features.
+              </p>
+              <Link href="/auth/sign-up">
+                <Button size="sm" className="w-full bg-amber-500 hover:bg-amber-600 text-black">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Create Account
+                </Button>
+              </Link>
+            </div>
+          )}
+
+          <nav className="space-y-2">
+            <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+              <span className="mr-2">💬</span> Chat
+            </Button>
+            <Link href="/routine">
+              <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+                <Calendar className="mr-2 h-4 w-4" />
+                My Routine
+              </Button>
+            </Link>
+            <Link href="/games">
+              <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+                <Gamepad2 className="mr-2 h-4 w-4" />
+                Games & Quizzes
+              </Button>
+            </Link>
+          </nav>
+
+          <div className="mt-auto space-y-2">
+            <div className="text-xs text-muted-foreground px-2">
+              {isGuest ? (
+                <span className="text-amber-400">Chat history disabled for guests</span>
+              ) : chatHistoryEnabled ? (
+                <span className="text-green-400">Chat history: ON</span>
+              ) : (
+                <span className="text-yellow-400">Chat history: OFF</span>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground px-2">
+              {voiceReplyEnabled ? (
+                <span className="text-green-400">Voice reply: ON</span>
+              ) : (
+                <span className="text-yellow-400">Voice reply: OFF</span>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground px-2">Click the microphone to speak</div>
+
+            <div className="space-y-1 pt-2 border-t border-border">
               <Link href="/routine">
                 <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
                   <Calendar className="mr-2 h-4 w-4" />
@@ -554,84 +685,50 @@ export function ChatInterface({
                   Games & Quizzes
                 </Button>
               </Link>
-            </nav>
 
-            <div className="mt-auto space-y-2">
-              <div className="text-xs text-muted-foreground px-2">
-                {isGuest ? (
-                  <span className="text-amber-400">Chat history disabled for guests</span>
-                ) : chatHistoryEnabled ? (
-                  <span className="text-green-400">Chat history: ON</span>
-                ) : (
-                  <span className="text-yellow-400">Chat history: OFF</span>
-                )}
-              </div>
-              <div className="text-xs text-muted-foreground px-2">
-                {voiceReplyEnabled ? (
-                  <span className="text-green-400">Voice reply: ON</span>
-                ) : (
-                  <span className="text-yellow-400">Voice reply: OFF</span>
-                )}
-              </div>
-              <div className="text-xs text-muted-foreground px-2">Click the microphone to speak</div>
-
-              <div className="space-y-1 pt-2 border-t border-border">
-                <Link href="/routine">
-                  <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    My Routine
+              {!isGuest && (
+                <>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowClearConfirm(true)}
+                    disabled={messages.length === 0}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Clear History
                   </Button>
-                </Link>
-                <Link href="/games">
-                  <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
-                    <Gamepad2 className="mr-2 h-4 w-4" />
-                    Games & Quizzes
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-muted-foreground hover:text-foreground"
+                    onClick={toggleChatHistory}
+                  >
+                    <History className="mr-2 h-4 w-4" />
+                    {chatHistoryEnabled ? "Disable History" : "Enable History"}
                   </Button>
-                </Link>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowOnboarding(true)}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </Button>
+                </>
+              )}
+            </div>
 
-                {!isGuest && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start text-muted-foreground hover:text-foreground"
-                      onClick={() => setShowClearConfirm(true)}
-                      disabled={messages.length === 0}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Clear History
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start text-muted-foreground hover:text-foreground"
-                      onClick={toggleChatHistory}
-                    >
-                      <History className="mr-2 h-4 w-4" />
-                      {chatHistoryEnabled ? "Disable History" : "Enable History"}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start text-muted-foreground hover:text-foreground"
-                      onClick={() => setShowOnboarding(true)}
-                    >
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
-                    </Button>
-                  </>
-                )}
-              </div>
-
-              <div className="pt-2 border-t border-border">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-muted-foreground hover:text-red-400"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  {isGuest ? "Exit Guest Mode" : "Sign Out"}
-                </Button>
-              </div>
+            <div className="pt-2 border-t border-border">
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-muted-foreground hover:text-red-400"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                {isGuest ? "Exit Guest Mode" : "Sign Out"}
+              </Button>
             </div>
           </div>
+        </div>
       </div>
 
       {/* Main Chat Area */}
@@ -772,29 +869,29 @@ export function ChatInterface({
         {/* Input Area */}
         <div className="border-t border-border bg-card/50 px-3 sm:px-6 py-3 sm:py-4">
           <FilePreview files={selectedFiles} onRemove={handleRemoveFile} />
-          <TooltipProvider>
-            <div className="max-w-4xl mx-auto flex gap-2 sm:gap-3 items-end">
-              <FileUploadButton onFilesSelected={handleFilesSelected} isLoading={isUploadingFiles} />
-              <Input
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage()}
-                placeholder={isListening ? "🎤 Listening..." : "Type or click mic..."}
-                disabled={isLoading || isUploadingFiles}
-                className="flex-1 resize-none text-sm"
-              />
-              <Button
-                onClick={() => startListening()}
-                disabled={isLoading || isUploadingFiles}
-                size="sm"
-                variant={isListening ? "default" : "outline"}
-                className="flex-shrink-0"
-              >
-                {isListening ? <MicOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Mic className="h-4 w-4 sm:h-5 sm:w-5" />}
-              </Button>
+          <div className="max-w-4xl mx-auto flex gap-2 sm:gap-3 items-end">
+            <FileUploadButton onFilesSelected={handleFilesSelected} isLoading={isUploadingFiles} />
+            <Input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage()}
+              placeholder={isListening ? "🎤 Listening..." : "Type or click mic..."}
+              disabled={isLoading || isUploadingFiles}
+              className="flex-1 resize-none text-sm"
+            />
+            <Button
+              onClick={() => startListening()}
+              disabled={isLoading || isUploadingFiles}
+              size="sm"
+              variant={isListening ? "default" : "outline"}
+              className="flex-shrink-0"
+            >
+              {isListening ? <MicOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Mic className="h-4 w-4 sm:h-5 sm:w-5" />}
+            </Button>
 
-              {/* Voice Reply Toggle */}
+            {/* Voice Reply Toggle */}
+            <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -820,17 +917,17 @@ export function ChatInterface({
                   {isSpeaking ? "Click to stop speaking" : voiceReplyEnabled ? "Voice replies ON" : "Voice replies OFF"}
                 </TooltipContent>
               </Tooltip>
+            </TooltipProvider>
 
-              <Button
-                onClick={handleSendMessage}
-                disabled={isLoading || isUploadingFiles || (!input.trim() && selectedFiles.length === 0)}
-                size="sm"
-                className="flex-shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
-              >
-                <Send className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
-            </div>
-          </TooltipProvider>
+            <Button
+              onClick={handleSendMessage}
+              disabled={isLoading || isUploadingFiles || (!input.trim() && selectedFiles.length === 0)}
+              size="sm"
+              className="flex-shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
+            >
+              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+            </Button>
+          </div>
         </div>
       </div>
 

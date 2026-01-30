@@ -181,8 +181,7 @@ export async function POST(request: Request) {
         total_marks: config.totalMarks,
         time_limit_minutes: config.timeLimitMinutes,
         marking_scheme: config.markingScheme,
-        sections: config.sections || null,
-        difficulty_level: 'average', // Declare difficulty variable here
+        difficulty_level: 'average',
       })
       .select()
       .single()

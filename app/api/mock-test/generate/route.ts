@@ -42,6 +42,21 @@ function getAllQuestionsForExam(examType: string): PYQQuestion[] {
   }
 }
 
+function getSubjectForExam(examType: string): string {
+  switch (examType) {
+    case 'cbse_9':
+    case 'cbse_10':
+    case 'cbse_11':
+    case 'cbse_12':
+      return 'Mixed' // CBSE exams have mixed subjects
+    case 'jee_mains':
+    case 'jee_advanced':
+      return 'All Subjects' // JEE has all 3 subjects
+    default:
+      return 'General'
+  }
+}
+
 function getTestConfig(examType: string, jeeAdvancedTime?: number) {
   const configs: Record<string, any> = {
     cbse_9: {
@@ -177,6 +192,7 @@ export async function POST(request: Request) {
         user_id: user.id,
         test_name: config.name,
         exam_type: examType,
+        subject: getSubjectForExam(examType),
         total_questions: config.totalQuestions,
         total_marks: config.totalMarks,
         time_limit_minutes: config.timeLimitMinutes,

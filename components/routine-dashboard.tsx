@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Plus, Calendar, Clock, BookOpen, ArrowLeft, AlertCircle } from "lucide-react"
+import { Plus, Calendar, Clock, BookOpen, ArrowLeft, AlertCircle, Trash2, Edit2 } from "lucide-react"
 import { AIRoutineGenerator } from "@/components/ai-routine-generator"
 import { SimpleRoutineGenerator } from "@/components/simple-routine-generator"
 import { NotificationPermissionManager } from "@/components/notification-permission-manager"
@@ -107,6 +107,38 @@ export function RoutineDashboard({
       console.error("Error saving routine:", error)
       alert("Failed to save routine. Please try again.")
     }
+  }
+
+  const handleDeleteRoutine = async (routineId: string, routineName: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${routineName}"? This will also delete all reminders for this routine.`)) {
+      return
+    }
+
+    try {
+      console.log('[v0] Deleting routine:', routineId)
+      const response = await fetch(`/api/routine/${routineId}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || "Failed to delete routine")
+      }
+
+      // Update local state
+      setRoutines(routines.filter((r) => r.id !== routineId))
+      setReminders(reminders.filter((r) => r.routine_id !== routineId))
+      
+      alert(`Routine "${routineName}" deleted successfully!`)
+    } catch (error) {
+      console.error("[v0] Error deleting routine:", error)
+      alert(`Failed to delete routine: ${error instanceof Error ? error.message : "Unknown error"}`)
+    }
+  }
+
+  const handleEditRoutine = (routine: any) => {
+    setSelectedRoutine(routine)
+    setShowBuilder(true)
   }
 
   const calculateTotalHours = (sessions: any[]) => {
@@ -262,6 +294,26 @@ export function RoutineDashboard({
                               ))}
                             </div>
                           </details>
+                        </div>
+
+                        <div className="flex gap-2 pt-4">
+                          <Button
+                            onClick={() => handleEditRoutine(routine)}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                          >
+                            <Edit2 className="w-4 h-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteRoutine(routine.id, routine.name)}
+                            variant="outline"
+                            size="sm"
+                            className="text-red-400 border-red-400/30 hover:bg-red-400/10 hover:border-red-400/50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
                     </Card>

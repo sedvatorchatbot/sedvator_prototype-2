@@ -54,7 +54,7 @@ export function MockTestHub() {
         throw new Error(error.error || 'Failed to generate test')
       }
 
-      const { mockTest: generatedTest } = await generateResponse.json()
+      const { test: generatedTest } = await generateResponse.json()
       console.log('[v0] Mock test generated:', generatedTest.id)
 
       // Start attempt

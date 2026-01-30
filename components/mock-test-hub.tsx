@@ -142,17 +142,15 @@ export function MockTestHub() {
 
       <div className="max-w-6xl mx-auto p-6 space-y-4">
         {errorMessage && (
-          <Card className="p-4 border-red-500/30 bg-red-500/10">
+          <Card className="p-4 border-amber-500/30 bg-amber-500/10">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-red-400">Error</p>
-                <p className="text-sm text-red-300 mt-1">{errorMessage}</p>
-                {errorMessage.includes('GEMINI_API_KEY') && (
-                  <p className="text-xs text-red-300 mt-2">
-                    Please add your Gemini API key to the environment variables in the Vars section.
-                  </p>
-                )}
+                <p className="text-sm font-semibold text-amber-400">Notice</p>
+                <p className="text-sm text-amber-300 mt-1">{errorMessage}</p>
+                <p className="text-xs text-amber-300 mt-2">
+                  ✓ Mock tests are now powered by pre-generated question banks (no API rate limits!)
+                </p>
               </div>
             </div>
           </Card>

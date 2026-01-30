@@ -1,14 +1,15 @@
 "use client"
 
+import Link from "next/link"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Plus, Calendar, Clock, BookOpen, ArrowLeft, AlertCircle } from "lucide-react"
 import { AIRoutineGenerator } from "@/components/ai-routine-generator"
+import { SimpleRoutineGenerator } from "@/components/simple-routine-generator"
 import { NotificationPermissionManager } from "@/components/notification-permission-manager"
-import Link from "next/link"
-import { setDeviceAlarm, playAlarmSound } from "@/lib/notifications"
-import { AdvancedRoutineBuilder } from "@/components/advanced-routine-builder" // Import AdvancedRoutineBuilder
+import { AdvancedRoutineBuilder } from "@/components/advanced-routine-builder"
+import { setDeviceAlarm } from "@/lib/notifications"
 
 interface RoutineDashboardProps {
   user: any
@@ -144,20 +145,12 @@ export function RoutineDashboard({
           <NotificationPermissionManager />
         </Card>
 
-        {/* Routine Builder */}
-        {showBuilder && (
-          <Card className="p-6 border-border">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold">Build Your Advanced Routine</h2>
-              <Button onClick={() => setShowBuilder(false)} variant="outline">
-                Cancel
-              </Button>
-            </div>
-            <AdvancedRoutineBuilder
-              onSave={handleSaveRoutine}
-              initialData={selectedRoutine}
-            />
-          </Card>
+        {/* Simple AI Generator */}
+        {showAIGenerator && (
+          <SimpleRoutineGenerator
+            onGenerate={handleGenerateRoutine}
+            onCancel={() => setShowAIGenerator(false)}
+          />
         )}
 
         {/* AI Generator */}
@@ -270,11 +263,11 @@ export function RoutineDashboard({
                   started!
                 </p>
                 <Button
-                  onClick={() => setShowBuilder(true)}
+                  onClick={() => setShowAIGenerator(true)}
                   className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white gap-2"
                 >
                   <Plus className="w-4 h-4" />
-                  Create First Routine
+                  Generate First Routine
                 </Button>
               </Card>
             )}

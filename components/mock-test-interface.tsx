@@ -27,6 +27,12 @@ interface MockTestInterfaceProps {
     time_limit_minutes: number
     marking_scheme: Record<string, number>
     questions: Question[]
+    sections?: Array<{
+      subject: string
+      mcqCount?: number
+      integerCount?: number
+    }>
+    exam_type?: string
   }
   onSubmit: (responses: Array<{ questionId: string; selectedOptions: string[]; timeSpent: number }>) => void
 }
@@ -143,6 +149,8 @@ export function MockTestInterface({ mockTest, onSubmit }: MockTestInterfaceProps
   }
 
   if (!testStarted) {
+    const isJEE = mockTest.exam_type?.startsWith('jee_')
+    
     return (
       <Card className="p-8 border-border text-center space-y-6">
         <div>
@@ -152,6 +160,20 @@ export function MockTestInterface({ mockTest, onSubmit }: MockTestInterfaceProps
             Minutes
           </p>
         </div>
+
+        {isJEE && mockTest.sections && (
+          <div className="grid md:grid-cols-3 gap-3 py-4">
+            {mockTest.sections.map((section) => (
+              <div key={section.subject} className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                <p className="text-sm font-semibold text-purple-400 capitalize">{section.subject}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {section.mcqCount} MCQ + {section.integerCount} Integer
+                </p>
+                <p className="text-xs text-muted-foreground">25 Questions</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="grid md:grid-cols-2 gap-4 py-4">
           <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">

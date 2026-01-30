@@ -3,17 +3,16 @@ import { generateMockTestQuestions } from '@/lib/gemini-provider'
 
 export async function POST(request: Request) {
   try {
-    const { examType, subject, difficulty, totalQuestions } = await request.json()
+    const { examType, subject, difficulty } = await request.json()
 
     console.log('[v0] Generating mock test:', {
       examType,
       subject,
       difficulty,
-      totalQuestions,
     })
 
     // Validate inputs
-    if (!examType || !subject || !difficulty || !totalQuestions) {
+    if (!examType || !difficulty) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -28,102 +27,146 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Generate questions using Gemini
-    const questionsData = await generateMockTestQuestions(
-      examType,
-      subject,
-      difficulty,
-      totalQuestions
-    )
+    // Determine test configuration based on exam type
+    let testConfig: any = {
+      markingScheme: { correct: 4, incorrect: -2, unattempted: 0 },
+      timeLimitMinutes: 180,
+      totalQuestions: 0,
+      totalMarks: 0,
+      testName: '',
+      sections: [],
+    }
 
-    // Determine marking scheme and time limit based on exam type
-    let markingScheme = { correct: 4, incorrect: -2, unattempted: 0 }
-    let timeLimitMinutes = 180
-    let totalMarks = totalQuestions * 4
+    if (examType.startsWith('jee_')) {
+      // JEE Mains & Advanced: All 3 subjects in one test
+      const subjects = ['physics', 'chemistry', 'mathematics']
+      const questionsPerSubject = 25 // 20 MCQ + 5 Integer type
 
-    switch (examType) {
-      case 'cbse_9':
-      case 'cbse_10':
-      case 'cbse_11':
-      case 'cbse_12':
-        markingScheme = { correct: 1, incorrect: 0, unattempted: 0 }
-        timeLimitMinutes = 60
-        totalMarks = totalQuestions
-        break
-      case 'jee_mains':
-        markingScheme = { correct: 4, incorrect: -2, unattempted: 0 }
-        timeLimitMinutes = 180
-        totalMarks = totalQuestions * 4
-        break
-      case 'jee_advanced':
-        // AI can vary this for JEE Advanced
-        markingScheme = { correct: 4, incorrect: -2, unattempted: 0 }
-        timeLimitMinutes = 180
-        totalMarks = totalQuestions * 4
-        break
+      // Generate questions for each subject
+      for (const subj of subjects) {
+        console.log(`[v0] Generating ${questionsPerSubject} questions for ${subj}`)
+
+        const questionsData = await generateMockTestQuestions(
+          examType,
+          subj,
+          difficulty,
+          questionsPerSubject
+        )
+
+        testConfig.sections.push({
+          subject: subj,
+          questions: questionsData.questions,
+          mcqCount: 20,
+          integerCount: 5,
+        })
+
+        testConfig.totalQuestions += questionsPerSubject
+      }
+
+      testConfig.totalMarks = 300 // 75 questions * 4 marks each
+      testConfig.testName = `${examType === 'jee_mains' ? 'JEE Mains' : 'JEE Advanced'} - Full Test`
+    } else {
+      // CBSE: Single subject
+      if (!subject) {
+        return Response.json({ error: 'Subject required for CBSE exams' }, { status: 400 })
+      }
+
+      const questionsData = await generateMockTestQuestions(examType, subject, difficulty, 10)
+
+      testConfig.sections.push({
+        subject: subject,
+        questions: questionsData.questions,
+      })
+
+      testConfig.totalQuestions = 10
+      testConfig.totalMarks = 10
+
+      if (examType.startsWith('cbse_')) {
+        testConfig.markingScheme = { correct: 1, incorrect: 0, unattempted: 0 }
+        testConfig.timeLimitMinutes = 60
+        testConfig.testName = `CBSE ${examType.split('_')[1].toUpperCase()} - ${subject}`
+      }
     }
 
     // Save test to database
-    const { data: mockTest, error: testError } = await supabase
+    const { data: test, error: testError } = await supabase
       .from('mock_tests')
       .insert({
         user_id: user.id,
         exam_type: examType,
-        subject: subject,
-        test_name: `${examType} - ${subject} Mock Test`,
-        total_questions: totalQuestions,
-        total_marks: totalMarks,
-        time_limit_minutes: timeLimitMinutes,
+        subject: subject || 'all_subjects', // For JEE
+        test_name: testConfig.testName,
+        total_questions: testConfig.totalQuestions,
+        total_marks: testConfig.totalMarks,
+        time_limit_minutes: testConfig.timeLimitMinutes,
         difficulty_level: difficulty,
-        marking_scheme: markingScheme,
-        status: 'active',
+        marking_scheme: testConfig.markingScheme,
       })
       .select()
       .single()
 
     if (testError) {
       console.error('[v0] Test creation error:', testError)
-      throw new Error('Failed to create mock test')
+      throw new Error('Failed to create test')
     }
 
-    // Save questions
-    const questionsToInsert = questionsData.questions.map((q: any, index: number) => ({
-      mock_test_id: mockTest.id,
-      question_number: index + 1,
-      question_text: q.question,
-      question_type: q.type || 'single_correct',
-      options: q.options,
-      correct_options: q.correct_options,
-      marks: q.marks || 4,
-      negative_marks: q.negative_marks || -2,
-      solution: q.solution,
-      difficulty: q.difficulty || difficulty,
-      topic: q.topic,
-      pyq_year: q.pyq_year || new Date().getFullYear(),
-    }))
+    console.log('[v0] Test created:', test.id)
 
-    const { data: questions, error: questionsError } = await supabase
-      .from('mock_questions')
-      .insert(questionsToInsert)
-      .select()
+    // Save all questions
+    let questionNumber = 1
+    const allQuestions: any[] = []
 
-    if (questionsError) {
-      console.error('[v0] Questions creation error:', questionsError)
-      throw new Error('Failed to create questions')
+    for (const section of testConfig.sections) {
+      for (const q of section.questions) {
+        const { data: question, error: qError } = await supabase
+          .from('mock_questions')
+          .insert({
+            mock_test_id: test.id,
+            question_number: questionNumber,
+            question_text: q.question,
+            question_type: q.type || 'single_correct',
+            options: q.options,
+            correct_options: q.correctOptions,
+            marks: q.marks || 4,
+            negative_marks: q.negativeMarks || -2,
+            solution: q.solution || '',
+            difficulty: q.difficulty || difficulty,
+            topic: q.topic || '',
+            pyq_year: q.year || new Date().getFullYear() - 1,
+          })
+          .select()
+          .single()
+
+        if (!qError && question) {
+          allQuestions.push({
+            ...question,
+            subject: section.subject,
+            mcqType: section.mcqCount && questionNumber <= section.mcqCount ? true : false,
+          })
+        }
+
+        questionNumber++
+      }
     }
 
-    console.log('[v0] Mock test created:', mockTest.id)
+    console.log('[v0] Created', allQuestions.length, 'questions')
 
     return Response.json({
       success: true,
-      mockTest: {
-        ...mockTest,
-        questions: questions,
+      test: {
+        id: test.id,
+        ...test,
+        questions: allQuestions,
+        sections: testConfig.sections.map((s: any) => ({
+          subject: s.subject,
+          mcqCount: s.mcqCount || 10,
+          integerCount: s.integerCount || 0,
+        })),
       },
     })
   } catch (error) {
-    console.error('[v0] Error generating mock test:', error)
-    const message = error instanceof Error ? error.message : 'Failed to generate mock test'
+    console.error('[v0] Error generating test:', error)
+    const message = error instanceof Error ? error.message : 'Failed to generate test'
     return Response.json({ error: message }, { status: 500 })
   }
 }

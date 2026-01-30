@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, BookOpen } from 'lucide-react'
 
 interface MockTestSelectorProps {
-  onTestSelect: (examType: string, subject: string, difficulty: string) => void
+  onTestSelect: (examType: string, subject: string | null, difficulty: string) => void
   isLoading?: boolean
 }
 
@@ -21,8 +21,8 @@ export function MockTestSelector({ onTestSelect, isLoading = false }: MockTestSe
     { value: 'cbse_10', label: 'CBSE Class 10' },
     { value: 'cbse_11', label: 'CBSE Class 11' },
     { value: 'cbse_12', label: 'CBSE Class 12' },
-    { value: 'jee_mains', label: 'JEE Mains' },
-    { value: 'jee_advanced', label: 'JEE Advanced (Super Difficult)' },
+    { value: 'jee_mains', label: 'JEE Mains (All Subjects)' },
+    { value: 'jee_advanced', label: 'JEE Advanced (All Subjects)' },
   ]
 
   const subjectByExam: Record<string, string[]> = {
@@ -30,19 +30,22 @@ export function MockTestSelector({ onTestSelect, isLoading = false }: MockTestSe
     cbse_10: ['mathematics', 'science', 'english', 'social_studies'],
     cbse_11: ['physics', 'chemistry', 'mathematics', 'biology'],
     cbse_12: ['physics', 'chemistry', 'mathematics', 'biology'],
-    jee_mains: ['physics', 'chemistry', 'mathematics'],
-    jee_advanced: ['physics', 'chemistry', 'mathematics'],
+    jee_mains: ['all'], // All subjects in single test
+    jee_advanced: ['all'], // All subjects in single test
   }
 
   const currentSubjects = subjectByExam[examType] || []
+  const isJEE = examType.startsWith('jee_')
 
   const handleExamChange = (value: string) => {
     setExamType(value)
-    setSubject(subjectByExam[value][0])
+    const firstSubject = subjectByExam[value]?.[0] || 'all'
+    setSubject(firstSubject)
   }
 
   const handleGenerateTest = () => {
-    onTestSelect(examType, subject, difficulty)
+    // For JEE, pass null for subject (it will generate all subjects)
+    onTestSelect(examType, isJEE ? null : subject, difficulty)
   }
 
   return (

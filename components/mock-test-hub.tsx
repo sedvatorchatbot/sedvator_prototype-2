@@ -17,6 +17,12 @@ interface MockTest {
   time_limit_minutes: number
   marking_scheme: Record<string, number>
   questions: any[]
+  sections?: Array<{
+    subject: string
+    mcqCount?: number
+    integerCount?: number
+  }>
+  exam_type?: string
 }
 
 export function MockTestHub() {
@@ -26,7 +32,7 @@ export function MockTestHub() {
   const [attemptId, setAttemptId] = useState<string | null>(null)
   const [testResult, setTestResult] = useState<any | null>(null)
 
-  const handleTestSelect = async (examType: string, subject: string, difficulty: string) => {
+  const handleTestSelect = async (examType: string, subject: string | null, difficulty: string) => {
     setIsGenerating(true)
     try {
       console.log('[v0] Generating mock test...')

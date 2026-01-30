@@ -46,8 +46,17 @@ export function AIRoutineGenerator({
       })
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to generate routine')
+        const contentType = response.headers.get('content-type')
+        let errorMsg = 'Failed to generate routine'
+        
+        if (contentType?.includes('application/json')) {
+          const data = await response.json()
+          errorMsg = data.error || errorMsg
+        } else {
+          errorMsg = `Server error (${response.status}). Please check your input and try again.`
+        }
+        
+        throw new Error(errorMsg)
       }
 
       const result = await response.json()

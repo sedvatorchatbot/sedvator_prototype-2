@@ -44,7 +44,8 @@ function insertBreaksIntoSchedule(sessions: any[]): any[] {
 
 export async function POST(request: Request) {
   try {
-    const { prompt } = await request.json()
+    const body = await request.json()
+    const { prompt } = body
 
     if (!prompt || !prompt.trim()) {
       return Response.json(
@@ -56,11 +57,13 @@ export async function POST(request: Request) {
     console.log('[v0] Generating routine from prompt:', prompt)
 
     // Generate optimal routine using AI
-    const message = await generateAIResponse({
-      messages: [
-        {
-          role: 'user',
-          content: `You are an expert study routine planner. Create an optimal, realistic study schedule.
+    let message
+    try {
+      message = await generateAIResponse({
+        messages: [
+          {
+            role: 'user',
+            content: `You are an expert study routine planner. Create an optimal, realistic study schedule.
 
 IMPORTANT: Do NOT include breaks in the sessions list - they will be added automatically.
 
@@ -100,11 +103,18 @@ Return ONLY this JSON structure (no markdown, no extra text):
 }
 
 Ensure times are in HH:MM format (24-hour). Return ONLY valid JSON.`,
-        },
-      ],
-      temperature: 0.7,
-      maxTokens: 2000,
-    })
+          },
+        ],
+        temperature: 0.7,
+        maxTokens: 2000,
+      })
+    } catch (aiError) {
+      console.error('[v0] AI generation error:', aiError)
+      return Response.json(
+        { error: `AI generation failed: ${aiError instanceof Error ? aiError.message : 'Unknown error'}` },
+        { status: 500 }
+      )
+    }
 
     console.log('[v0] AI response received')
 

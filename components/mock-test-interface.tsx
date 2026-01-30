@@ -78,9 +78,25 @@ export function MockTestInterface({ mockTest, onSubmit }: MockTestInterfaceProps
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
   }
 
-  const question = mockTest.questions[currentQuestion]
+  const question = mockTest.questions?.[currentQuestion]
+
+  // Guard: if no question exists, show an error
+  if (testStarted && !question) {
+    return (
+      <Card className="p-8 border-border">
+        <div className="flex items-center gap-3 text-red-400">
+          <AlertCircle className="w-6 h-6" />
+          <div>
+            <p className="font-semibold">Error: Question not found</p>
+            <p className="text-sm">Questions array is empty or invalid</p>
+          </div>
+        </div>
+      </Card>
+    )
+  }
 
   const handleOptionSelect = (optionId: string) => {
+    if (!question) return
     const questionId = question.id
 
     if (question.question_type === 'single_correct') {
@@ -104,7 +120,7 @@ export function MockTestInterface({ mockTest, onSubmit }: MockTestInterfaceProps
   }
 
   const goToPrevious = () => {
-    if (currentQuestion > 0) {
+    if (currentQuestion > 0 && question) {
       // Record time for current question
       const timeSpent = Math.floor((Date.now() - currentQuestionStartTime) / 1000)
       setQuestionTimes((prev) => ({
@@ -118,7 +134,7 @@ export function MockTestInterface({ mockTest, onSubmit }: MockTestInterfaceProps
   }
 
   const goToNext = () => {
-    if (currentQuestion < mockTest.total_questions - 1) {
+    if (currentQuestion < mockTest.total_questions - 1 && question) {
       // Record time for current question
       const timeSpent = Math.floor((Date.now() - currentQuestionStartTime) / 1000)
       setQuestionTimes((prev) => ({
@@ -132,6 +148,7 @@ export function MockTestInterface({ mockTest, onSubmit }: MockTestInterfaceProps
   }
 
   const submitTest = () => {
+    if (!question) return
     // Record time for last question
     const timeSpent = Math.floor((Date.now() - currentQuestionStartTime) / 1000)
     setQuestionTimes((prev) => ({
@@ -139,7 +156,7 @@ export function MockTestInterface({ mockTest, onSubmit }: MockTestInterfaceProps
       [question.id]: (prev[question.id] || 0) + timeSpent,
     }))
 
-    const formattedResponses = mockTest.questions.map((q) => ({
+    const formattedResponses = (mockTest.questions || []).map((q) => ({
       questionId: q.id,
       selectedOptions: responses[q.id] || [],
       timeSpent: questionTimes[q.id] || 0,

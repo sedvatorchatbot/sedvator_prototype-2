@@ -1,14 +1,23 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-const apiKey = process.env.GEMINI_API_KEY
+let genAI: any = null
+let model: any = null
 
-if (!apiKey) {
-  throw new Error('GEMINI_API_KEY environment variable is not set')
+function initializeGemini() {
+  if (model) return model
+
+  const apiKey = process.env.GEMINI_API_KEY
+
+  if (!apiKey) {
+    throw new Error(
+      'GEMINI_API_KEY environment variable is not set. Please add your Gemini API key to your environment variables.'
+    )
+  }
+
+  genAI = new GoogleGenerativeAI(apiKey)
+  model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' })
+  return model
 }
-
-const genAI = new GoogleGenerativeAI(apiKey)
-
-export const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' })
 
 export async function generateMockTestQuestions(
   examType: string,
@@ -16,9 +25,10 @@ export async function generateMockTestQuestions(
   difficulty: string,
   totalQuestions: number
 ) {
-  const prompt = getMockTestPrompt(examType, subject, difficulty, totalQuestions)
-
   try {
+    const model = initializeGemini()
+    const prompt = getMockTestPrompt(examType, subject, difficulty, totalQuestions)
+
     console.log('[v0] Generating mock test with Gemini...')
     const result = await model.generateContent(prompt)
     const response = await result.response
@@ -29,10 +39,12 @@ export async function generateMockTestQuestions(
     // Parse JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
+      console.error('[v0] Gemini response:', text)
       throw new Error('No JSON found in Gemini response')
     }
 
     const questions = JSON.parse(jsonMatch[0])
+    console.log('[v0] Successfully parsed', questions.questions?.length, 'questions')
     return questions
   } catch (error) {
     console.error('[v0] Error generating mock test:', error)

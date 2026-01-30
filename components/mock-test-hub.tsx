@@ -6,7 +6,7 @@ import { MockTestInterface } from '@/components/mock-test-interface'
 import { MockTestAnalysis } from '@/components/mock-test-analysis'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 
 interface MockTest {
@@ -31,6 +31,7 @@ export function MockTestHub() {
   const [mockTest, setMockTest] = useState<MockTest | null>(null)
   const [attemptId, setAttemptId] = useState<string | null>(null)
   const [testResult, setTestResult] = useState<any | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const handleTestSelect = async (examType: string, subject: string | null, difficulty: string) => {
     setIsGenerating(true)
@@ -79,7 +80,8 @@ export function MockTestHub() {
       setStage('test')
     } catch (error) {
       console.error('[v0] Error generating test:', error)
-      alert(error instanceof Error ? error.message : 'Failed to generate test')
+      const errorMsg = error instanceof Error ? error.message : 'Failed to generate test'
+      setErrorMessage(errorMsg)
     } finally {
       setIsGenerating(false)
     }
@@ -138,7 +140,24 @@ export function MockTestHub() {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-6 space-y-4">
+        {errorMessage && (
+          <Card className="p-4 border-red-500/30 bg-red-500/10">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-red-400">Error</p>
+                <p className="text-sm text-red-300 mt-1">{errorMessage}</p>
+                {errorMessage.includes('GEMINI_API_KEY') && (
+                  <p className="text-xs text-red-300 mt-2">
+                    Please add your Gemini API key to the environment variables in the Vars section.
+                  </p>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
+
         {stage === 'selector' && (
           <MockTestSelector onTestSelect={handleTestSelect} isLoading={isGenerating} />
         )}

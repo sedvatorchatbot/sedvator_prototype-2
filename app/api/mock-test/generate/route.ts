@@ -3,6 +3,17 @@ import { generateMockTestQuestions } from '@/lib/gemini-provider'
 
 export async function POST(request: Request) {
   try {
+    // Check if GEMINI_API_KEY is set
+    if (!process.env.GEMINI_API_KEY) {
+      console.error('[v0] GEMINI_API_KEY is not set')
+      return Response.json(
+        {
+          error: 'Gemini API key not configured. Please add GEMINI_API_KEY to your environment variables.',
+        },
+        { status: 500 }
+      )
+    }
+
     const { examType, subject, difficulty } = await request.json()
 
     console.log('[v0] Generating mock test:', {

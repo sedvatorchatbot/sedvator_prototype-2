@@ -175,15 +175,22 @@ Ensure times are in HH:MM format (24-hour). Return ONLY valid JSON.`,
     }
 
     // Save sessions with breaks
-    const sessionsToInsert = sessionsWithBreaks.map((session: any) => ({
-      routine_id: routine.id,
-      session_name: session.session_name,
-      subject: session.subject || 'Study',
-      start_time: session.start_time,
-      end_time: session.end_time,
-      is_break: session.is_break || false,
-      notes: session.notes || '',
-    }))
+    const sessionsToInsert = sessionsWithBreaks.map((session: any) => {
+      const startMinutes = timeToMinutes(session.start_time)
+      const endMinutes = timeToMinutes(session.end_time)
+      const durationMinutes = Math.max(0, endMinutes - startMinutes)
+
+      return {
+        routine_id: routine.id,
+        session_name: session.session_name,
+        subject: session.subject || 'Study',
+        start_time: session.start_time,
+        end_time: session.end_time,
+        duration_minutes: durationMinutes,
+        is_break: session.is_break || false,
+        notes: session.notes || '',
+      }
+    })
 
     const { data: sessions, error: sessionsError } = await supabase
       .from('routine_sessions')

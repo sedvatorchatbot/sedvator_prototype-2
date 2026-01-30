@@ -21,21 +21,30 @@ export function NotificationPermissionManager() {
   const [browserDenied, setBrowserDenied] = useState(false)
   const [phoneDenied, setPhoneDenied] = useState(false)
 
-  // Check initial permission status on mount
+  // Check permissions on component mount and when window focus changes
   useEffect(() => {
     const checkPermissions = async () => {
       const browserAvailable = isBrowserNotificationAvailable()
       setBrowserEnabled(browserAvailable)
+      console.log('[v0] Browser notifications available:', browserAvailable)
       
       if ('Notification' in window && Notification.permission === 'denied') {
         setBrowserDenied(true)
+        console.log('[v0] Browser notifications denied')
+      } else {
+        setBrowserDenied(false)
       }
 
       const phoneAvailable = isPhoneNotificationAvailable()
       setPhoneEnabled(phoneAvailable)
+      console.log('[v0] Phone notifications available:', phoneAvailable)
     }
 
     checkPermissions()
+    
+    // Re-check when window regains focus (user may have changed settings)
+    window.addEventListener('focus', checkPermissions)
+    return () => window.removeEventListener('focus', checkPermissions)
   }, [])
 
   const handleBrowserPermission = async () => {
@@ -135,12 +144,23 @@ export function NotificationPermissionManager() {
   }
 
   const handleTestBrowserNotification = () => {
+    console.log('[v0] Testing browser notification, permission:', 'Notification' in window ? Notification.permission : 'N/A')
+    if ('Notification' in window && Notification.permission !== 'granted') {
+      setMessage('✗ Notifications permission not granted. Please enable notifications first.')
+      return
+    }
+    
     console.log('[v0] Sending test browser notification')
-    sendBrowserNotification('Test Notification 🔔', {
+    const result = sendBrowserNotification('Test Notification 🔔', {
       body: 'This is what your study reminders will look like',
       icon: '/icon.svg',
     })
-    setMessage('Test notification sent! Check your notification area.')
+    
+    if (result) {
+      setMessage('✓ Test notification sent! Check your notification area.')
+    } else {
+      setMessage('✗ Failed to send notification')
+    }
   }
 
   const handleTestPhoneAlarm = () => {
@@ -149,7 +169,7 @@ export function NotificationPermissionManager() {
       navigator.vibrate([500, 200, 500, 200, 500, 200, 500])
     }
     playAlarmSound()
-    setMessage('Alarm test - you should feel vibrations and hear a sound!')
+    setMessage('✓ Alarm test - you should feel vibrations and hear a sound!')
   }
 
   return (

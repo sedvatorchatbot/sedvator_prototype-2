@@ -36,14 +36,14 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Delete reminders first (foreign key constraint)
+    // Delete routine reminders first (foreign key constraint)
     const { error: remindersError } = await supabase
-      .from('reminders')
+      .from('routine_reminders')
       .delete()
       .eq('routine_id', routineId)
 
     if (remindersError) {
-      console.error('[v0] Error deleting reminders:', remindersError)
+      console.error('[v0] Error deleting routine reminders:', remindersError.message)
       return NextResponse.json(
         { error: 'Failed to delete reminders' },
         { status: 500 }

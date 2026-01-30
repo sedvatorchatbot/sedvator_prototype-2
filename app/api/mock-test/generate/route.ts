@@ -10,6 +10,7 @@ import {
   examDistributions,
   type PYQQuestion,
 } from '@/lib/pyq-database'
+import { getOptimizedDistribution, analyzePYQTrends } from '@/lib/pyq-trend-analyzer'
 
 const allQuestions = [
   ...cbseClass9PYQs,
@@ -121,22 +122,31 @@ function getPYQsForExam(examType: string): PYQQuestion[] {
 
 export async function POST(request: Request) {
   try {
-    const { examType, jeeAdvancedTime, difficulty } = await request.json()
+    const { examType, jeeAdvancedTime } = await request.json()
 
-    console.log('[v0] Generating mock test for:', examType, 'JEE Advanced Time:', jeeAdvancedTime)
+    console.log('[v0] Generating mock test for:', examType)
+    console.log('[v0] Analyzing PYQ trends...')
 
     const config = getTestConfig(examType, jeeAdvancedTime)
     const pyqs = getPYQsForExam(examType)
 
-    // Select questions maintaining exam_id ISOLATION and PYQ distribution
+    // Analyze PYQ trends
+    const trendAnalysis = analyzePYQTrends(pyqs)
+    console.log('[v0] Trend Analysis:', trendAnalysis.map((t) => `${t.chapterName}: ${t.percentage.toFixed(1)}%`).join(', '))
+
+    // Get AI-optimized distribution
+    const optimizedDistribution = await getOptimizedDistribution(pyqs, examType)
+    console.log('[v0] AI-Optimized Distribution:', optimizedDistribution)
+
+    // Select questions with optimized distribution
     const selectedQuestions = selectQuestionsWithDistribution(
-      allQuestions,
+      pyqs,
       config.totalQuestions,
       examType,
-      distribution
+      optimizedDistribution
     )
 
-    console.log('[v0] Selected', selectedQuestions.length, 'questions with distribution')
+    console.log('[v0] Selected', selectedQuestions.length, 'questions with AI-optimized distribution')
 
     if (selectedQuestions.length === 0) {
       throw new Error('No questions available for this exam type')
@@ -172,7 +182,7 @@ export async function POST(request: Request) {
         time_limit_minutes: config.timeLimitMinutes,
         marking_scheme: config.markingScheme,
         sections: config.sections || null,
-        difficulty_level: difficulty,
+        difficulty_level: 'average', // Declare difficulty variable here
       })
       .select()
       .single()

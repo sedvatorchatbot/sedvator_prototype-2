@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Brain, Zap, FileText, Trophy, Plus, ArrowLeft, Upload, Gamepad2, Puzzle, Target, Sparkles } from "lucide-react"
+import { Brain, Zap, FileText, Trophy, Plus, ArrowLeft, Upload, Gamepad2, Puzzle, Target, Sparkles, BookOpen } from "lucide-react"
 import Link from "next/link"
 import { QuizGame } from "./quiz-game"
 import { SpeedQuiz } from "./speed-quiz"
@@ -692,6 +692,64 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="mock-tests" className="mt-6">
+            <Card className="border-primary/20 bg-card">
+              <CardHeader>
+                <CardTitle className="text-foreground flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-cyan-400" />
+                  Exam Mock Tests
+                </CardTitle>
+                <CardDescription>
+                  AI-generated practice tests for CBSE, JEE Mains, and JEE Advanced exams
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <Card className="p-6 border-cyan-500/30 bg-cyan-500/5 hover:border-cyan-500/50 transition-colors cursor-pointer">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="font-semibold text-foreground text-lg">CBSE & JEE Practice</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Generated from real exam papers
+                        </p>
+                      </div>
+                      <BookOpen className="h-6 w-6 text-cyan-400" />
+                    </div>
+                    <ul className="space-y-2 text-sm text-muted-foreground mb-4">
+                      <li>✓ Classes 9-12 (CBSE)</li>
+                      <li>✓ JEE Mains (NTA Pattern)</li>
+                      <li>✓ JEE Advanced (IIT Pattern)</li>
+                      <li>✓ Timed Tests (Auto-Submit)</li>
+                      <li>✓ Detailed Analysis & Scores</li>
+                    </ul>
+                    <Link href="/mock-tests">
+                      <Button className="w-full bg-cyan-600 hover:bg-cyan-700 text-white">
+                        Start Mock Test
+                      </Button>
+                    </Link>
+                  </Card>
+
+                  <Card className="p-6 border-blue-500/30 bg-blue-500/5">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="font-semibold text-foreground text-lg">Features</h3>
+                      </div>
+                      <Sparkles className="h-6 w-6 text-blue-400" />
+                    </div>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li>📊 Subject-wise Performance</li>
+                      <li>⏱️ Time Management Tracking</li>
+                      <li>🎯 Difficulty-wise Analysis</li>
+                      <li>💡 Strength & Weakness Areas</li>
+                      <li>📈 Progress Tracking</li>
+                      <li>🔄 Multiple Question Types</li>
+                    </ul>
+                  </Card>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

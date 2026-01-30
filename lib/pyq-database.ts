@@ -9,7 +9,8 @@ export interface PYQQuestion {
   type: 'mcq' | 'integer' | 'subjective'
   source: 'official_pyq' | 'byjus' | 'allen' | 'pw'
   question: string
-  options?: Array<{ id: string; text: string }>
+  diagram?: string // URL or base64 encoded diagram/image
+  options?: Array<{ id: string; text: string; diagram?: string }> // Some options may have diagrams
   correctAnswer: string | string[]
   explanation: string
   marks: number

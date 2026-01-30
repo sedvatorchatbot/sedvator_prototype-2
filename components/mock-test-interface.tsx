@@ -243,20 +243,31 @@ export function MockTestInterface({ mockTest, onSubmit }: MockTestInterfaceProps
         {/* Question Card */}
         <Card className="p-6 border-border space-y-6">
           <div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">{question?.question_text}</h3>
-            {question?.question_type === 'multiple_correct' && (
-              <p className="text-xs text-amber-400 flex items-center gap-1">
+            <h3 className="text-lg font-semibold text-foreground mb-2">{question?.question}</h3>
+            {question?.diagram && (
+              <div className="mb-4 p-4 bg-background border border-border rounded-lg">
+                <img
+                  src={question.diagram || "/placeholder.svg"}
+                  alt="Question diagram"
+                  className="max-w-full h-auto max-h-96 mx-auto rounded"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              </div>
+            )}
+            {question?.type === 'mcq' && question?.options?.some((opt) => opt.diagram) && (
+              <p className="text-xs text-blue-400 flex items-center gap-1 mt-2">
                 <AlertCircle className="w-3 h-3" />
-                Multiple correct options possible
+                Some options contain diagrams
               </p>
             )}
           </div>
 
           {/* Options */}
           <div className="space-y-3">
-            {question?.options.map((option) => {
+            {question?.options?.map((option) => {
               const isSelected = responses[question.id]?.includes(option.id)
-              const isCorrect = question.correct_options.includes(option.id)
 
               return (
                 <button
@@ -268,15 +279,29 @@ export function MockTestInterface({ mockTest, onSubmit }: MockTestInterfaceProps
                       : 'border-border hover:border-cyan-500/50 bg-background'
                   }`}
                 >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                        isSelected ? 'border-cyan-400 bg-cyan-400' : 'border-border'
-                      }`}
-                    >
-                      {isSelected && <CheckCircle className="w-4 h-4 text-background" />}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                          isSelected ? 'border-cyan-400 bg-cyan-400' : 'border-border'
+                        }`}
+                      >
+                        {isSelected && <CheckCircle className="w-4 h-4 text-background" />}
+                      </div>
+                      <span className="text-foreground">{option.text}</span>
                     </div>
-                    <span className="text-foreground">{option.text}</span>
+                    {option.diagram && (
+                      <div className="ml-9 mt-2 p-3 bg-background border border-border rounded">
+                        <img
+                          src={option.diagram || "/placeholder.svg"}
+                          alt={`Option ${option.id} diagram`}
+                          className="max-w-full h-auto max-h-48 rounded"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none'
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </button>
               )

@@ -175,7 +175,7 @@ Ensure times are in HH:MM format (24-hour). Return ONLY valid JSON.`,
     }
 
     // Save sessions with breaks
-    const sessionsToInsert = sessionsWithBreaks.map((session: any) => {
+    const sessionsToInsert = sessionsWithBreaks.map((session: any, index: number) => {
       const startMinutes = timeToMinutes(session.start_time)
       const endMinutes = timeToMinutes(session.end_time)
       const durationMinutes = Math.max(0, endMinutes - startMinutes)
@@ -187,6 +187,7 @@ Ensure times are in HH:MM format (24-hour). Return ONLY valid JSON.`,
         start_time: session.start_time,
         end_time: session.end_time,
         duration_minutes: durationMinutes,
+        session_order: index + 1,
         is_break: session.is_break || false,
         notes: session.notes || '',
       }

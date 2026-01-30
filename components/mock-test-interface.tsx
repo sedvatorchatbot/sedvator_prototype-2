@@ -264,52 +264,92 @@ export function MockTestInterface({ mockTest, onSubmit }: MockTestInterfaceProps
             )}
           </div>
 
-          {/* Options */}
-          <div className="space-y-3">
-            {question?.options?.map((option) => {
-              const isSelected = responses[question.id]?.includes(option.id)
+          {/* MCQ Options */}
+          {question?.type === 'mcq' && (
+            <div className="space-y-3">
+              {question?.options?.map((option) => {
+                const isSelected = responses[question.id]?.includes(option.id)
 
-              return (
-                <button
-                  key={option.id}
-                  onClick={() => handleOptionSelect(option.id)}
-                  className={`w-full p-4 rounded-lg border-2 transition-colors text-left ${
-                    isSelected
-                      ? 'border-cyan-500 bg-cyan-500/10'
-                      : 'border-border hover:border-cyan-500/50 bg-background'
-                  }`}
-                >
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                          isSelected ? 'border-cyan-400 bg-cyan-400' : 'border-border'
-                        }`}
-                      >
-                        {isSelected && <CheckCircle className="w-4 h-4 text-background" />}
+                return (
+                  <button
+                    key={option.id}
+                    onClick={() => handleOptionSelect(option.id)}
+                    className={`w-full p-4 rounded-lg border-2 transition-colors text-left ${
+                      isSelected
+                        ? 'border-cyan-500 bg-cyan-500/10'
+                        : 'border-border hover:border-cyan-500/50 bg-background'
+                    }`}
+                  >
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-start gap-3">
+                        <div
+                          className={`w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                            isSelected ? 'border-cyan-400 bg-cyan-400' : 'border-border'
+                          }`}
+                        >
+                          {isSelected && <CheckCircle className="w-4 h-4 text-background" />}
+                        </div>
+                        <span className="text-foreground">{option.text}</span>
                       </div>
-                      <span className="text-foreground">{option.text}</span>
+                      {option.diagram && (
+                        <div className="ml-9 mt-2 p-3 bg-background border border-border rounded">
+                          <img
+                            src={option.diagram || "/placeholder.svg"}
+                            alt={`Option ${option.id} diagram`}
+                            className="max-w-full h-auto max-h-48 rounded"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none'
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
-                    {option.diagram && (
-                      <div className="ml-9 mt-2 p-3 bg-background border border-border rounded">
-                        <img
-                          src={option.diagram || "/placeholder.svg"}
-                          alt={`Option ${option.id} diagram`}
-                          className="max-w-full h-auto max-h-48 rounded"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none'
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Integer Type Input */}
+          {question?.type === 'integer' && (
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-foreground">Enter your answer (integer):</label>
+              <input
+                type="number"
+                placeholder="Enter integer value"
+                value={responses[question.id]?.[0] || ''}
+                onChange={(e) => {
+                  setResponses((prev) => ({
+                    ...prev,
+                    [question.id]: e.target.value ? [e.target.value] : [],
+                  }))
+                }}
+                className="w-full px-4 py-3 rounded-lg border-2 border-border bg-background text-foreground focus:outline-none focus:border-cyan-500"
+              />
+              <p className="text-xs text-muted-foreground">Numeric answers only. No negative values unless specified.</p>
+            </div>
+          )}
+
+          {/* Subjective Type Input */}
+          {question?.type === 'subjective' && (
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-foreground">Your Answer:</label>
+              <textarea
+                placeholder="Write your answer here..."
+                value={responses[question.id]?.[0] || ''}
+                onChange={(e) => {
+                  setResponses((prev) => ({
+                    ...prev,
+                    [question.id]: e.target.value ? [e.target.value] : [],
+                  }))
+                }}
+                className="w-full px-4 py-3 rounded-lg border-2 border-border bg-background text-foreground focus:outline-none focus:border-cyan-500 min-h-24 resize-none"
+              />
+            </div>
+          )}
 
           <div className="p-3 bg-background border border-border rounded text-xs text-muted-foreground">
-            Marks: +{question?.marks} | Negative: {question?.negative_marks}
+            Marks: +{question?.marks} | Type: {question?.type?.toUpperCase()}
           </div>
         </Card>
 

@@ -9,7 +9,7 @@ import {
   jeeMainsPYQs,
   jeeAdvancedPYQs,
 } from '@/lib/pyq-database'
-import { analyzePYQTrends, calculateDistribution, adjustDistributionWithAI } from '@/lib/pyq-trend-analyzer'
+import { analyzePYQTrends, calculateDistribution, getOptimizedDistribution } from '@/lib/pyq-trend-analyzer'
 
 function getPYQsForExam(examType: string) {
   switch (examType) {
@@ -42,15 +42,11 @@ export async function GET(request: Request) {
     // Get trend analysis
     const trendStats = analyzePYQTrends(pyqs)
 
-    // Get original distribution
-    const originalDistribution = calculateDistribution(pyqs)
+    // Get optimized distribution
+    const optimizedDistribution = await getOptimizedDistribution(pyqs, examType)
 
-    // Get AI-adjusted distribution
-    const aiAdjustment = await adjustDistributionWithAI(
-      originalDistribution,
-      pyqs,
-      examType
-    )
+    // Get original distribution for comparison
+    const originalDistribution = calculateDistribution(pyqs)
 
     // Format chapter statistics
     const formattedStats = trendStats.map((stat) => ({
@@ -58,7 +54,9 @@ export async function GET(request: Request) {
       subject: stat.subject,
       questionsCount: stat.totalQuestions,
       originalPercentage: parseFloat(stat.percentage.toFixed(1)),
-      adjustedPercentage: parseFloat((aiAdjustment.adjustedDistribution[stat.chapterName] || 0).toFixed(1)),
+      optimizedPercentage: parseFloat((optimizedDistribution[stat.chapterName] || 0).toFixed(1)),
+      recencyScore: parseFloat(stat.recencyScore.toFixed(1)),
+      consistencyScore: parseFloat(stat.consistencyScore.toFixed(1)),
       yearsAppeared: stat.years,
       trend: stat.years.length > 1 ? 'consistent' : 'occasional',
     }))
@@ -70,9 +68,7 @@ export async function GET(request: Request) {
       trendAnalysis: {
         chapters: formattedStats,
         originalDistribution,
-        adjustedDistribution: aiAdjustment.adjustedDistribution,
-        adjustmentReason: aiAdjustment.adjustmentReason,
-        confidenceScore: aiAdjustment.confidenceScore,
+        optimizedDistribution,
       },
     })
   } catch (error) {

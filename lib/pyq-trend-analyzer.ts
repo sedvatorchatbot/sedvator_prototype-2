@@ -1,6 +1,6 @@
-// PYQ Trend Analyzer & AI-Powered Distribution Adjuster
-// Analyzes historical PYQ data to calculate chapter-wise percentages
-// Uses Groq AI to intelligently adjust distributions based on trends
+// PYQ Trend Analyzer & Distribution Optimizer
+// Analyzes historical PYQ data to calculate intelligent chapter-wise percentages
+// Uses deterministic algorithms (no external API dependency)
 
 import type { PYQQuestion } from './pyq-database'
 
@@ -10,7 +10,9 @@ interface ChapterStats {
   totalQuestions: number
   percentage: number
   years: number[]
-  avgYearDifference: number
+  recencyScore: number
+  consistencyScore: number
+  optimizedPercentage: number
 }
 
 interface DistributionAnalysis {
@@ -20,11 +22,28 @@ interface DistributionAnalysis {
   timestampAnalyzed: Date
 }
 
-interface AIAdjustedDistribution {
-  originalDistribution: Record<string, number>
-  adjustedDistribution: Record<string, number>
-  adjustmentReason: string
-  confidenceScore: number
+/**
+ * Calculate recency score based on which years questions appeared
+ * Recent years get higher scores
+ */
+function calculateRecencyScore(years: number[]): number {
+  if (years.length === 0) return 0
+  const currentYear = new Date().getFullYear()
+  const latestYear = Math.max(...years)
+  const yearsSinceLatest = currentYear - latestYear
+  // Score: 100 for this year, decreases by 20 per year
+  return Math.max(0, 100 - yearsSinceLatest * 20)
+}
+
+/**
+ * Calculate consistency score based on how often chapter appears across years
+ */
+function calculateConsistencyScore(years: number[]): number {
+  if (years.length === 0) return 0
+  const uniqueYears = new Set(years).size
+  // Higher score if appears in more different years
+  // Max 5 years, so max score is 100 when appears in all 5
+  return Math.min(100, (uniqueYears / 5) * 100)
 }
 
 /**
@@ -46,172 +65,100 @@ export function analyzePYQTrends(questions: PYQQuestion[]): ChapterStats[] {
   const stats: ChapterStats[] = Array.from(chapterMap.entries()).map(([key, qList]) => {
     const [subject, chapter] = key.split('__')
     const years = [...new Set(qList.map((q) => q.year))].sort()
-    const latestYear = years[years.length - 1]
-    const avgYearDiff = years.length > 1 ? (latestYear - years[0]) / (years.length - 1) : 0
-
+    
     return {
       chapterName: chapter,
       subject,
       totalQuestions: qList.length,
       percentage: 0, // Will calculate below
       years,
-      avgYearDifference: avgYearDiff,
+      recencyScore: calculateRecencyScore(years),
+      consistencyScore: calculateConsistencyScore(years),
+      optimizedPercentage: 0, // Will calculate below
     }
   })
 
-  // Calculate percentages
+  // Calculate base percentages
   const totalQs = stats.reduce((sum, s) => sum + s.totalQuestions, 0)
   stats.forEach((s) => {
     s.percentage = (s.totalQuestions / totalQs) * 100
   })
 
-  return stats.sort((a, b) => b.percentage - a.percentage)
+  // Calculate optimized percentages with AI-like adjustments
+  // Factor in: frequency (60%), recency (25%), consistency (15%)
+  stats.forEach((s) => {
+    const baseScore = s.percentage
+    const recencyBoost = (s.recencyScore / 100) * 15 // +15% max for recent chapters
+    const consistencyBoost = (s.consistencyScore / 100) * 10 // +10% max for consistent
+    s.optimizedPercentage = baseScore + recencyBoost + consistencyBoost
+  })
+
+  // Re-normalize optimized percentages to 100
+  const totalOptimized = stats.reduce((sum, s) => sum + s.optimizedPercentage, 0)
+  stats.forEach((s) => {
+    s.optimizedPercentage = (s.optimizedPercentage / totalOptimized) * 100
+  })
+
+  return stats.sort((a, b) => b.optimizedPercentage - a.optimizedPercentage)
 }
 
 /**
- * Calculate chapter-wise distribution percentages
+ * Calculate chapter-wise distribution percentages with optimization
  */
 export function calculateDistribution(questions: PYQQuestion[]): Record<string, number> {
+  const stats = analyzePYQTrends(questions)
   const distribution: Record<string, number> = {}
-  const chapterMap = new Map<string, number>()
 
-  questions.forEach((q) => {
-    const chapterKey = q.chapter
-    chapterMap.set(chapterKey, (chapterMap.get(chapterKey) || 0) + 1)
-  })
-
-  const total = questions.length
-  Array.from(chapterMap.entries()).forEach(([chapter, count]) => {
-    distribution[chapter] = Math.round((count / total) * 100)
+  stats.forEach((stat) => {
+    distribution[stat.chapterName] = Math.round(stat.optimizedPercentage)
   })
 
   return distribution
 }
 
 /**
- * AI-powered distribution adjustment using Groq
- * Analyzes trends and adjusts chapter percentages intelligently
- */
-export async function adjustDistributionWithAI(
-  originalDistribution: Record<string, number>,
-  questions: PYQQuestion[],
-  examType: string
-): Promise<AIAdjustedDistribution> {
-  try {
-    const stats = analyzePYQTrends(questions)
-
-    // Build analysis context
-    const analysisContext = `
-Exam Type: ${examType}
-Total PYQ Questions Analyzed: ${questions.length}
-
-Current Chapter Distribution (based on historical PYQs):
-${stats.map((s) => `- ${s.chapterName} (${s.subject}): ${s.percentage.toFixed(1)}% (${s.totalQuestions} questions, appeared in years: ${s.years.join(', ')})`).join('\n')}
-
-Task: Analyze the PYQ trends and suggest adjusted chapter distribution percentages for upcoming mock tests.
-Consider:
-1. High-frequency chapters (more than 20% of PYQs) are likely core concepts
-2. Trending chapters (appeared in recent years) should get slight boost
-3. Chapters that appear consistently across years are reliable
-4. Outlier chapters with very low frequency might need slight reduction
-
-Provide JSON response with:
-{
-  "adjustedDistribution": { "chapterName": percentage, ... },
-  "reasoning": "explanation of adjustments",
-  "confidence": 0-100
-}
-    `
-
-    // Call Groq AI for intelligent adjustment
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'llama3-70b-8192',
-        messages: [
-          {
-            role: 'user',
-            content: analysisContext,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 1000,
-      }),
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      console.error('[v0] Groq API error:', errorData.error?.message || response.statusText)
-      // Fallback: Return original distribution
-      return {
-        originalDistribution,
-        adjustedDistribution: originalDistribution,
-        adjustmentReason: 'Using original distribution (AI adjustment unavailable)',
-        confidenceScore: 0,
-      }
-    }
-
-    const data = await response.json()
-    const aiText = data.choices[0]?.message?.content || ''
-
-    // Parse JSON from AI response
-    const jsonMatch = aiText.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      return {
-        originalDistribution,
-        adjustedDistribution: originalDistribution,
-        adjustmentReason: 'Could not parse AI response',
-        confidenceScore: 0,
-      }
-    }
-
-    const aiResponse = JSON.parse(jsonMatch[0])
-
-    // Normalize percentages to 100
-    const adjustedDist = aiResponse.adjustedDistribution || originalDistribution
-    const total = Object.values(adjustedDist).reduce((sum: number, val: number) => sum + val, 0)
-    const normalizedDist: Record<string, number> = {}
-    Object.entries(adjustedDist).forEach(([chapter, percentage]) => {
-      normalizedDist[chapter] = Math.round(((percentage as number) / total) * 100)
-    })
-
-    return {
-      originalDistribution,
-      adjustedDistribution: normalizedDist,
-      adjustmentReason: aiResponse.reasoning || 'AI-powered trend analysis',
-      confidenceScore: aiResponse.confidence || 75,
-    }
-  } catch (error) {
-    console.error('[v0] Error in AI adjustment:', error)
-    return {
-      originalDistribution,
-      adjustedDistribution: originalDistribution,
-      adjustmentReason: 'Error during AI processing, using original',
-      confidenceScore: 0,
-    }
-  }
-}
-
-/**
- * Get distribution for test generation
- * Combines trend analysis and AI adjustment
+ * Get optimized distribution - uses deterministic trend analysis
+ * No external API calls, so no deprecation issues
  */
 export async function getOptimizedDistribution(
   questions: PYQQuestion[],
   examType: string
 ): Promise<Record<string, number>> {
-  const originalDist = calculateDistribution(questions)
+  try {
+    console.log('[v0] Analyzing PYQ trends for', examType)
+    const stats = analyzePYQTrends(questions)
+    
+    // Log analysis for transparency
+    console.log(
+      '[v0] Optimized chapter distribution:',
+      stats.slice(0, 5).map((s) => `${s.chapterName}: ${s.optimizedPercentage.toFixed(1)}%`).join(', ')
+    )
 
-  // Only use AI if Groq API is available
-  if (process.env.GROQ_API_KEY) {
-    const aiAdjusted = await adjustDistributionWithAI(originalDist, questions, examType)
-    console.log('[v0] Distribution adjusted with AI:', aiAdjusted.adjustmentReason)
-    return aiAdjusted.adjustedDistribution
+    const distribution: Record<string, number> = {}
+    stats.forEach((stat) => {
+      distribution[stat.chapterName] = Math.round(stat.optimizedPercentage)
+    })
+
+    // Ensure total is 100
+    let total = Object.values(distribution).reduce((sum, val) => sum + val, 0)
+    if (total !== 100) {
+      const diff = 100 - total
+      const firstChapter = Object.keys(distribution)[0]
+      if (firstChapter) {
+        distribution[firstChapter] += diff
+      }
+    }
+
+    return distribution
+  } catch (error) {
+    console.error('[v0] Error calculating distribution:', error)
+    // Fallback: equal distribution
+    const chapters = [...new Set(questions.map((q) => q.chapter))]
+    const fallback: Record<string, number> = {}
+    const percent = Math.floor(100 / chapters.length)
+    chapters.forEach((ch) => {
+      fallback[ch] = percent
+    })
+    return fallback
   }
-
-  return originalDist
 }

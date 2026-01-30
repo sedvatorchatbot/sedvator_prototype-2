@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Plus, Calendar, Clock, BookOpen, ArrowLeft } from "lucide-react"
-import { AdvancedRoutineBuilder } from "@/components/advanced-routine-builder"
+import { Plus, Calendar, Clock, BookOpen, ArrowLeft, AlertCircle } from "lucide-react"
+import { AIRoutineGenerator } from "@/components/ai-routine-generator"
 import { NotificationPermissionManager } from "@/components/notification-permission-manager"
 import Link from "next/link"
+import { setDeviceAlarm, playAlarmSound } from "@/lib/notifications"
+import { AdvancedRoutineBuilder } from "@/components/advanced-routine-builder" // Import AdvancedRoutineBuilder
 
 interface RoutineDashboardProps {
   user: any
@@ -23,8 +25,48 @@ export function RoutineDashboard({
 }: RoutineDashboardProps) {
   const [routines, setRoutines] = useState(initialRoutines)
   const [reminders, setReminders] = useState(initialReminders)
+  const [showAIGenerator, setShowAIGenerator] = useState(false)
   const [showBuilder, setShowBuilder] = useState(false)
   const [selectedRoutine, setSelectedRoutine] = useState<any>(null)
+  const [alarmScheduled, setAlarmScheduled] = useState<string | null>(null)
+
+  // Setup alarms when component mounts and reminders load
+  useEffect(() => {
+    setupAlarms()
+  }, [reminders])
+
+  const setupAlarms = async () => {
+    console.log('[v0] Setting up alarms for reminders')
+    try {
+      for (const reminder of reminders.filter((r) => r.is_active)) {
+        if (reminder.reminder_type === 'both' || reminder.reminder_type === 'phone') {
+          const sessionName = reminder.routine_sessions?.session_name || 'Study Time'
+          await setDeviceAlarm(reminder.reminder_time, sessionName)
+          console.log('[v0] Alarm set for', reminder.reminder_time)
+        }
+      }
+    } catch (error) {
+      console.error('[v0] Error setting up alarms:', error)
+    }
+  }
+
+  const handleGenerateRoutine = async (routineData: any) => {
+    try {
+      setRoutines([routineData.routine, ...routines])
+      setReminders((prev) => [...(routineData.reminders || []), ...prev])
+      setShowAIGenerator(false)
+
+      // Setup alarms for new reminders
+      await setupAlarms()
+
+      alert(
+        `Routine "${routineData.routine.name}" created with ${routineData.remindersCreated} automatic reminders and alarms!`
+      )
+    } catch (error) {
+      console.error("Error saving routine:", error)
+      alert("Failed to save routine. Please try again.")
+    }
+  }
 
   const handleSaveRoutine = async (routineData: any) => {
     try {
@@ -85,7 +127,7 @@ export function RoutineDashboard({
             </p>
           </div>
         </div>
-        {!showBuilder && (
+        {!showAIGenerator && !showBuilder && (
           <Button
             onClick={() => setShowBuilder(true)}
             className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white gap-2"
@@ -118,8 +160,16 @@ export function RoutineDashboard({
           </Card>
         )}
 
+        {/* AI Generator */}
+        {showAIGenerator && (
+          <AIRoutineGenerator
+            onGenerate={handleGenerateRoutine}
+            onCancel={() => setShowAIGenerator(false)}
+          />
+        )}
+
         {/* Routines List */}
-        {!showBuilder && (
+        {!showAIGenerator && !showBuilder && (
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold">Your Routines</h2>
 
@@ -232,7 +282,7 @@ export function RoutineDashboard({
         )}
 
         {/* Active Reminders Section */}
-        {!showBuilder && reminders && reminders.length > 0 && (
+        {!showAIGenerator && !showBuilder && reminders && reminders.length > 0 && (
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold">Active Reminders</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

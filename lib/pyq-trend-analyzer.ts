@@ -131,7 +131,7 @@ Provide JSON response with:
         Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.1-70b-versatile',
+        model: 'llama3-70b-8192',
         messages: [
           {
             role: 'user',
@@ -144,7 +144,8 @@ Provide JSON response with:
     })
 
     if (!response.ok) {
-      console.error('[v0] Groq API error:', response.statusText)
+      const errorData = await response.json()
+      console.error('[v0] Groq API error:', errorData.error?.message || response.statusText)
       // Fallback: Return original distribution
       return {
         originalDistribution,

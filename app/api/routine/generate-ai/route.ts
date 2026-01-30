@@ -167,7 +167,6 @@ Ensure times are in HH:MM format (24-hour). Return ONLY valid JSON.`,
     // Save sessions with breaks
     const sessionsToInsert = sessionsWithBreaks.map((session: any) => ({
       routine_id: routine.id,
-      user_id: user.id,
       session_name: session.session_name,
       subject: session.subject || 'Study',
       start_time: session.start_time,

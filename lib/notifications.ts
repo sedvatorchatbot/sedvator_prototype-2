@@ -142,7 +142,14 @@ export async function requestPhoneNotificationPermission(): Promise<boolean> {
 }
 
 /**
- * Set device alarm using Web Alarm API or fallback methods
+ * Check if device supports phone notifications
+ */
+export function isPhoneNotificationAvailable(): boolean {
+  return 'vibrate' in navigator || ('Notification' in window && Notification.permission === 'granted')
+}
+
+/**
+ * Set device alarm
  */
 export async function setDeviceAlarm(
   reminderTime: string, // HH:MM format
@@ -151,22 +158,12 @@ export async function setDeviceAlarm(
   try {
     console.log('[v0] Setting device alarm for', reminderTime, 'title:', title)
 
-    // Vibrate device
+    // Gentle vibration feedback (don't shake screen excessively)
     if ('vibrate' in navigator) {
       try {
-        navigator.vibrate([200, 100, 200])
+        navigator.vibrate(100) // Single short vibration
       } catch (e) {
         console.log('[v0] Vibration not available')
-      }
-    }
-
-    // For Android with Chrome, we can use background notifications
-    if ('serviceWorker' in navigator) {
-      try {
-        const registration = await navigator.serviceWorker.ready
-        console.log('[v0] Service Worker ready, can set alarms')
-      } catch (e) {
-        console.log('[v0] Service Worker not ready:', e)
       }
     }
 
@@ -174,10 +171,9 @@ export async function setDeviceAlarm(
     scheduleNotification(`${title} - Study Time!`, reminderTime, {
       body: `Time to start: ${title}`,
       icon: '/icon.svg',
-      sound: '/alarm-sound.mp3',
     })
 
-    // Also vibrate when time comes
+    // Schedule vibration at alarm time (don't vibrate immediately)
     const [hours, minutes] = reminderTime.split(':').map(Number)
     const now = new Date()
     const alarmDate = new Date()
@@ -190,10 +186,12 @@ export async function setDeviceAlarm(
     const delay = alarmDate.getTime() - now.getTime()
 
     setTimeout(() => {
-      // Vibrate pattern for alarm
+      // Gentle vibration pattern at alarm time
       if ('vibrate' in navigator) {
-        navigator.vibrate([500, 200, 500, 200, 500])
+        navigator.vibrate([200, 100, 200]) // Short vibration pattern
       }
+      // Try to play sound
+      playAlarmSound()
     }, delay)
 
     return true
@@ -204,28 +202,54 @@ export async function setDeviceAlarm(
 }
 
 /**
- * Play alarm sound
+ * Play alarm sound safely
  */
 export function playAlarmSound(): void {
   try {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-    const oscillator = audioContext.createOscillator()
-    const gainNode = audioContext.createGain()
+    // Try using Web Audio API if available and supported
+    if (typeof window !== 'undefined' && (window.AudioContext || (window as any).webkitAudioContext)) {
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+        
+        // Resume audio context if suspended (required by browser autoplay policy)
+        if (audioContext.state === 'suspended') {
+          audioContext.resume()
+        }
 
-    oscillator.connect(gainNode)
-    gainNode.connect(audioContext.destination)
+        const oscillator = audioContext.createOscillator()
+        const gainNode = audioContext.createGain()
 
-    // Alarm frequency pattern
-    oscillator.frequency.setValueAtTime(800, audioContext.currentTime)
-    oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1)
+        oscillator.connect(gainNode)
+        gainNode.connect(audioContext.destination)
 
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime + 2)
+        // Gentle alarm frequency pattern
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime)
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.1)
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.2)
 
-    oscillator.start(audioContext.currentTime)
-    oscillator.stop(audioContext.currentTime + 2)
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime + 1)
 
-    console.log('[v0] Playing alarm sound')
+        oscillator.start(audioContext.currentTime)
+        oscillator.stop(audioContext.currentTime + 1)
+
+        console.log('[v0] Playing alarm sound via Web Audio API')
+        return
+      } catch (audioError) {
+        console.warn('[v0] Web Audio API failed, trying fallback:', audioError)
+      }
+    }
+
+    // Fallback: Try using HTML5 audio element with data URL
+    try {
+      const audioDataUrl = 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA=='
+      const audio = new Audio(audioDataUrl)
+      audio.volume = 0.3
+      audio.play().catch((e) => console.log('[v0] Audio playback failed:', e))
+      console.log('[v0] Playing alarm sound via HTML5 audio')
+    } catch (e) {
+      console.log('[v0] Audio playback not available:', e)
+    }
   } catch (error) {
     console.error('[v0] Error playing alarm sound:', error)
   }

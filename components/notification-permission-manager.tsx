@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Bell, Smartphone, AlertCircle, CheckCircle } from 'lucide-react'
@@ -9,6 +9,8 @@ import {
   requestPhoneNotificationPermission,
   sendBrowserNotification,
   playAlarmSound,
+  isBrowserNotificationAvailable,
+  isPhoneNotificationAvailable,
 } from '@/lib/notifications'
 
 export function NotificationPermissionManager() {
@@ -16,6 +18,25 @@ export function NotificationPermissionManager() {
   const [phoneEnabled, setPhoneEnabled] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [browserDenied, setBrowserDenied] = useState(false)
+  const [phoneDenied, setPhoneDenied] = useState(false)
+
+  // Check initial permission status on mount
+  useEffect(() => {
+    const checkPermissions = async () => {
+      const browserAvailable = isBrowserNotificationAvailable()
+      setBrowserEnabled(browserAvailable)
+      
+      if ('Notification' in window && Notification.permission === 'denied') {
+        setBrowserDenied(true)
+      }
+
+      const phoneAvailable = isPhoneNotificationAvailable()
+      setPhoneEnabled(phoneAvailable)
+    }
+
+    checkPermissions()
+  }, [])
 
   const handleBrowserPermission = async () => {
     setIsLoading(true)
@@ -24,6 +45,7 @@ export function NotificationPermissionManager() {
       console.log('[v0] Requesting browser notification permission...')
       const granted = await requestBrowserNotificationPermission()
       setBrowserEnabled(granted)
+      setBrowserDenied(!granted && 'Notification' in window && Notification.permission === 'denied')
 
       if (granted) {
         console.log('[v0] Browser notifications granted!')
@@ -50,7 +72,13 @@ export function NotificationPermissionManager() {
           console.log('[v0] Could not save to database:', e)
         }
       } else {
-        setMessage('✗ Browser notifications denied or not available')
+        const isDenied = 'Notification' in window && Notification.permission === 'denied'
+        if (isDenied) {
+          setMessage('✗ Browser notifications denied - please enable in browser settings')
+          setBrowserDenied(true)
+        } else {
+          setMessage('Browser notifications not available on this browser')
+        }
       }
     } catch (error) {
       console.error('[v0] Error requesting browser permission:', error)
@@ -67,6 +95,7 @@ export function NotificationPermissionManager() {
       console.log('[v0] Requesting phone notification permission...')
       const granted = await requestPhoneNotificationPermission()
       setPhoneEnabled(granted)
+      setPhoneDenied(!granted)
 
       if (granted) {
         console.log('[v0] Phone notifications granted!')
@@ -74,7 +103,7 @@ export function NotificationPermissionManager() {
 
         // Test vibration
         if ('vibrate' in navigator) {
-          navigator.vibrate([200, 100, 200, 100, 200])
+          navigator.vibrate([100])
           console.log('[v0] Vibration triggered')
         }
 
@@ -94,7 +123,8 @@ export function NotificationPermissionManager() {
           console.log('[v0] Could not save to database:', e)
         }
       } else {
-        setMessage('✗ Phone notifications not available on this device')
+        setMessage('✗ Phone alarms not available on this device or permission denied')
+        setPhoneDenied(true)
       }
     } catch (error) {
       console.error('[v0] Error requesting phone permission:', error)
@@ -169,6 +199,11 @@ export function NotificationPermissionManager() {
                 <CheckCircle className="w-3 h-3" />
                 Enabled - You will receive notifications
               </div>
+            ) : browserDenied ? (
+              <div className="text-xs text-amber-400 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                Denied - Enable in browser settings to use notifications
+              </div>
             ) : (
               <p className="text-xs text-muted-foreground">
                 Click below to enable browser notifications
@@ -177,7 +212,7 @@ export function NotificationPermissionManager() {
           </div>
 
           <div className="flex gap-2 flex-col">
-            {!browserEnabled ? (
+            {!browserEnabled && !browserDenied ? (
               <Button
                 onClick={handleBrowserPermission}
                 disabled={isLoading}
@@ -185,7 +220,7 @@ export function NotificationPermissionManager() {
               >
                 {isLoading ? 'Enabling...' : 'Enable Notifications'}
               </Button>
-            ) : (
+            ) : browserEnabled ? (
               <Button
                 onClick={handleTestBrowserNotification}
                 variant="outline"
@@ -193,6 +228,10 @@ export function NotificationPermissionManager() {
               >
                 Send Test Notification
               </Button>
+            ) : (
+              <p className="text-xs text-muted-foreground p-2 bg-background/50 rounded text-center">
+                Notifications are disabled in your browser settings
+              </p>
             )}
           </div>
         </Card>
@@ -217,6 +256,11 @@ export function NotificationPermissionManager() {
                 <CheckCircle className="w-3 h-3" />
                 Enabled - Alarms will ring and vibrate
               </div>
+            ) : phoneDenied ? (
+              <div className="text-xs text-amber-400 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                Not available or denied on this device
+              </div>
             ) : (
               <p className="text-xs text-muted-foreground">
                 Click below to enable phone alarms
@@ -225,7 +269,7 @@ export function NotificationPermissionManager() {
           </div>
 
           <div className="flex gap-2 flex-col">
-            {!phoneEnabled ? (
+            {!phoneEnabled && !phoneDenied ? (
               <Button
                 onClick={handlePhonePermission}
                 disabled={isLoading}
@@ -233,7 +277,7 @@ export function NotificationPermissionManager() {
               >
                 {isLoading ? 'Enabling...' : 'Enable Phone Alarms'}
               </Button>
-            ) : (
+            ) : phoneEnabled ? (
               <Button
                 onClick={handleTestPhoneAlarm}
                 variant="outline"
@@ -241,6 +285,10 @@ export function NotificationPermissionManager() {
               >
                 Test Alarm (Vibration + Sound)
               </Button>
+            ) : (
+              <p className="text-xs text-muted-foreground p-2 bg-background/50 rounded text-center">
+                Phone alarms not supported on this device
+              </p>
             )}
           </div>
         </Card>

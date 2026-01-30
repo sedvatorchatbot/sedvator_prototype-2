@@ -371,7 +371,7 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
 
         {/* Game Modes */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-secondary">
+          <TabsList className="grid w-full grid-cols-4 bg-secondary">
             <TabsTrigger
               value="quizzes"
               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -392,13 +392,6 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
             >
               <Gamepad2 className="h-4 w-4 mr-2" />
               Fun Games
-            </TabsTrigger>
-            <TabsTrigger
-              value="mock-tests"
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              <BookOpen className="h-4 w-4 mr-2" />
-              Mock Tests
             </TabsTrigger>
             <TabsTrigger
               value="leaderboard"

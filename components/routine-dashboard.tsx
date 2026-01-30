@@ -30,14 +30,18 @@ export function RoutineDashboard({
   const [showBuilder, setShowBuilder] = useState(false)
   const [selectedRoutine, setSelectedRoutine] = useState<any>(null)
   const [alarmScheduled, setAlarmScheduled] = useState<string | null>(null)
+  const [alarmsInitialized, setAlarmsInitialized] = useState(false)
 
-  // Setup alarms when component mounts and reminders load
+  // Setup alarms only once on mount with initial reminders
   useEffect(() => {
-    setupAlarms()
-  }, [reminders])
+    if (!alarmsInitialized && initialReminders.length > 0) {
+      setupAlarms()
+      setAlarmsInitialized(true)
+    }
+  }, [alarmsInitialized])
 
   const setupAlarms = async () => {
-    console.log('[v0] Setting up alarms for reminders')
+    console.log('[v0] Setting up alarms for reminders, count:', reminders.length)
     try {
       for (const reminder of reminders.filter((r) => r.is_active)) {
         if (reminder.reminder_type === 'both' || reminder.reminder_type === 'phone') {
@@ -57,12 +61,15 @@ export function RoutineDashboard({
       setReminders((prev) => [...(routineData.reminders || []), ...prev])
       setShowAIGenerator(false)
 
-      // Setup alarms for new reminders
-      await setupAlarms()
-
+      // Show success message
       alert(
         `Routine "${routineData.routine.name}" created with ${routineData.remindersCreated} automatic reminders and alarms!`
       )
+
+      // Setup alarms for new reminders after a small delay
+      setTimeout(() => {
+        setupAlarms()
+      }, 500)
     } catch (error) {
       console.error("Error saving routine:", error)
       alert("Failed to save routine. Please try again.")
@@ -87,9 +94,15 @@ export function RoutineDashboard({
       setReminders((prev) => [...(result.reminders || []), ...prev])
       setShowBuilder(false)
 
+      // Show success message
       alert(
         `Routine created with ${result.remindersCreated} automatic reminders!`
       )
+
+      // Setup alarms for new reminders after a small delay
+      setTimeout(() => {
+        setupAlarms()
+      }, 500)
     } catch (error) {
       console.error("Error saving routine:", error)
       alert("Failed to save routine. Please try again.")

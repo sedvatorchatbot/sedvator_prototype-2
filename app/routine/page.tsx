@@ -14,21 +14,35 @@ export default async function RoutinePage() {
   }
 
   // Get user profile
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single()
 
-  // Get existing routines
+  // Get existing routines with sessions
   const { data: routines } = await supabase
     .from("study_routines")
-    .select("*")
+    .select(
+      `
+      *,
+      routine_sessions(*)
+    `
+    )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
 
-  // Get reminders
+  // Get reminders with session details
   const { data: reminders } = await supabase
-    .from("reminders")
-    .select("*")
+    .from("routine_reminders")
+    .select(
+      `
+      *,
+      routine_sessions(*)
+    `
+    )
     .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
+    .order("reminder_time", { ascending: true })
 
   return (
     <RoutineDashboard

@@ -1,49 +1,18 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
-import type { User } from "@supabase/supabase-js"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { RoutineCard } from "@/components/routine-card"
-import { ReminderModal } from "@/components/reminder-modal"
-import { ArrowLeft, Plus, Bell, Calendar, Sparkles, Loader2 } from "lucide-react"
+import { Card } from "@/components/ui/card"
+import { Plus, Calendar, Clock, BookOpen, ArrowLeft } from "lucide-react"
+import { AdvancedRoutineBuilder } from "@/components/advanced-routine-builder"
+import { NotificationPermissionManager } from "@/components/notification-permission-manager"
 import Link from "next/link"
 
-interface Profile {
-  id: string
-  grade: string | null
-  subjects: string[] | null
-}
-
-interface StudyRoutine {
-  id: string
-  title: string
-  schedule: {
-    weeklySchedule: {
-      day: string
-      sessions: {
-        time: string
-        subject: string
-        activity: string
-        duration: number
-      }[]
-    }[]
-    tips: string[]
-  }
-  created_at: string
-}
-
-interface Reminder {
-  id: string
-  title: string
-  time: string
-  days: string[]
-  enabled: boolean
+interface RoutineDashboardProps {
+  user: any
+  profile: any
+  initialRoutines: any[]
+  initialReminders: any[]
 }
 
 export function RoutineDashboard({
@@ -51,109 +20,48 @@ export function RoutineDashboard({
   profile,
   initialRoutines,
   initialReminders,
-}: {
-  user: User
-  profile: Profile | null
-  initialRoutines: StudyRoutine[]
-  initialReminders: Reminder[]
-}) {
-  const [routines, setRoutines] = useState<StudyRoutine[]>(initialRoutines)
-  const [reminders, setReminders] = useState<Reminder[]>(initialReminders)
-  const [showGenerator, setShowGenerator] = useState(false)
-  const [showReminderModal, setShowReminderModal] = useState(false)
-  const [isGenerating, setIsGenerating] = useState(false)
+}: RoutineDashboardProps) {
+  const [routines, setRoutines] = useState(initialRoutines)
+  const [reminders, setReminders] = useState(initialReminders)
+  const [showBuilder, setShowBuilder] = useState(false)
+  const [selectedRoutine, setSelectedRoutine] = useState<any>(null)
 
-  // Generator form state
-  const [goal, setGoal] = useState("")
-  const [availableHours, setAvailableHours] = useState("2")
-  const [daysPerWeek, setDaysPerWeek] = useState("5")
-
-  const generateRoutine = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!goal.trim()) return
-
-    setIsGenerating(true)
+  const handleSaveRoutine = async (routineData: any) => {
     try {
-      const response = await fetch("/api/routine", {
+      const response = await fetch("/api/routine/advanced", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          goal,
-          grade: profile?.grade || "High School",
-          subjects: profile?.subjects || ["General Studies"],
-          availableHours: Number.parseInt(availableHours),
-          daysPerWeek: Number.parseInt(daysPerWeek),
-        }),
+        body: JSON.stringify(routineData),
       })
 
-      const data = await response.json()
-
-      if (data.routine) {
-        // Save to database
-        const supabase = createClient()
-        const { data: savedRoutine, error } = await supabase
-          .from("study_routines")
-          .insert({
-            user_id: user.id,
-            title: data.routine.title || `Study Plan for ${goal}`,
-            schedule: data.routine,
-          })
-          .select()
-          .single()
-
-        if (!error && savedRoutine) {
-          setRoutines((prev) => [savedRoutine as StudyRoutine, ...prev])
-        }
-
-        setShowGenerator(false)
-        setGoal("")
+      if (!response.ok) {
+        throw new Error("Failed to save routine")
       }
+
+      const result = await response.json()
+
+      setRoutines([result.routine, ...routines])
+      setReminders((prev) => [...(result.reminders || []), ...prev])
+      setShowBuilder(false)
+
+      alert(
+        `Routine created with ${result.remindersCreated} automatic reminders!`
+      )
     } catch (error) {
-      console.error("Failed to generate routine:", error)
-    } finally {
-      setIsGenerating(false)
+      console.error("Error saving routine:", error)
+      alert("Failed to save routine. Please try again.")
     }
   }
 
-  const deleteRoutine = async (id: string) => {
-    const supabase = createClient()
-    await supabase.from("study_routines").delete().eq("id", id)
-    setRoutines((prev) => prev.filter((r) => r.id !== id))
-  }
-
-  const saveReminder = async (reminder: Omit<Reminder, "id">) => {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from("reminders")
-      .insert({
-        user_id: user.id,
-        ...reminder,
-      })
-      .select()
-      .single()
-
-    if (!error && data) {
-      setReminders((prev) => [data as Reminder, ...prev])
-
-      // Request notification permission
-      if ("Notification" in window && Notification.permission === "default") {
-        await Notification.requestPermission()
-      }
-    }
-
-    setShowReminderModal(false)
-  }
-
-  const toggleReminder = async (id: string, enabled: boolean) => {
-    const supabase = createClient()
-    await supabase.from("reminders").update({ enabled }).eq("id", id)
-    setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, enabled } : r)))
-  }
-
-  const deleteReminder = async (id: string) => {
-    const supabase = createClient()
-    await supabase.from("reminders").delete().eq("id", id)
-    setReminders((prev) => prev.filter((r) => r.id !== id))
+  const calculateTotalHours = (sessions: any[]) => {
+    return sessions
+      .filter((s) => !s.is_break)
+      .reduce((total, session) => {
+        const start = new Date(`2024-01-01T${session.start_time}`)
+        const end = new Date(`2024-01-01T${session.end_time}`)
+        const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60)
+        return total + hours
+      }, 0)
   }
 
   return (
@@ -162,214 +70,209 @@ export function RoutineDashboard({
       <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-card/50 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <Link href="/chat">
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-foreground"
+            >
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
           <div>
             <h1 className="font-semibold text-foreground">Study Routines</h1>
-            <p className="text-xs text-muted-foreground">Plan your learning journey</p>
+            <p className="text-xs text-muted-foreground">
+              Plan your learning journey with 16+ hour routines
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        {!showBuilder && (
           <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowReminderModal(true)}
-            className="border-border text-muted-foreground hover:text-foreground bg-transparent"
+            onClick={() => setShowBuilder(true)}
+            className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white gap-2"
           >
-            <Bell className="w-4 h-4 mr-2" />
-            Reminder
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setShowGenerator(true)}
-            className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-4 h-4" />
             New Routine
           </Button>
-        </div>
+        )}
       </header>
 
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Active Reminders */}
-        {reminders.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Bell className="w-5 h-5 text-cyan-400" />
-              Your Reminders
-            </h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {reminders.map((reminder) => (
-                <div
-                  key={reminder.id}
-                  className="bg-card border border-border rounded-xl p-4 flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center ${reminder.enabled ? "bg-cyan-500/20 text-cyan-400" : "bg-muted text-muted-foreground"}`}
-                    >
-                      <Bell className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">{reminder.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {reminder.time} • {reminder.days.join(", ")}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleReminder(reminder.id, !reminder.enabled)}
-                      className={reminder.enabled ? "text-cyan-400" : "text-muted-foreground"}
-                    >
-                      {reminder.enabled ? "On" : "Off"}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteReminder(reminder.id)}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      ×
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+      <div className="max-w-6xl mx-auto p-6 space-y-8">
+        {/* Notification Settings */}
+        <Card className="p-6 border-border">
+          <NotificationPermissionManager />
+        </Card>
 
-        {/* Routine Generator Form */}
-        {showGenerator && (
-          <section className="mb-8">
-            <div className="bg-card border border-border rounded-2xl p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-cyan-400" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-foreground">Generate Study Routine</h2>
-                  <p className="text-sm text-muted-foreground">AI will create a personalized plan for you</p>
-                </div>
-              </div>
-
-              <form onSubmit={generateRoutine} className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-foreground">What&apos;s your study goal?</Label>
-                  <Input
-                    value={goal}
-                    onChange={(e) => setGoal(e.target.value)}
-                    placeholder="e.g., Prepare for math exam, Learn chemistry basics..."
-                    className="bg-secondary border-border"
-                  />
-                </div>
-
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Hours per day</Label>
-                    <Select value={availableHours} onValueChange={setAvailableHours}>
-                      <SelectTrigger className="bg-secondary border-border">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1 hour</SelectItem>
-                        <SelectItem value="2">2 hours</SelectItem>
-                        <SelectItem value="3">3 hours</SelectItem>
-                        <SelectItem value="4">4 hours</SelectItem>
-                        <SelectItem value="5">5+ hours</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Days per week</Label>
-                    <Select value={daysPerWeek} onValueChange={setDaysPerWeek}>
-                      <SelectTrigger className="bg-secondary border-border">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="3">3 days</SelectItem>
-                        <SelectItem value="4">4 days</SelectItem>
-                        <SelectItem value="5">5 days</SelectItem>
-                        <SelectItem value="6">6 days</SelectItem>
-                        <SelectItem value="7">Every day</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowGenerator(false)}
-                    className="border-border text-muted-foreground hover:text-foreground bg-transparent"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={!goal.trim() || isGenerating}
-                    className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Generate Routine
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </section>
-        )}
-
-        {/* Study Routines */}
-        <section>
-          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-cyan-400" />
-            Your Study Routines
-          </h2>
-
-          {routines.length === 0 ? (
-            <div className="bg-card border border-border rounded-2xl p-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center mx-auto mb-4">
-                <Calendar className="w-8 h-8 text-cyan-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">No routines yet</h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Create your first AI-powered study routine to stay organized and achieve your learning goals.
-              </p>
-              <Button
-                onClick={() => setShowGenerator(true)}
-                className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Your First Routine
+        {/* Routine Builder */}
+        {showBuilder && (
+          <Card className="p-6 border-border">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold">Build Your Advanced Routine</h2>
+              <Button onClick={() => setShowBuilder(false)} variant="outline">
+                Cancel
               </Button>
             </div>
-          ) : (
-            <div className="space-y-6">
-              {routines.map((routine) => (
-                <RoutineCard key={routine.id} routine={routine} onDelete={() => deleteRoutine(routine.id)} />
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
+            <AdvancedRoutineBuilder
+              onSave={handleSaveRoutine}
+              initialData={selectedRoutine}
+            />
+          </Card>
+        )}
 
-      {/* Reminder Modal */}
-      {showReminderModal && <ReminderModal onSave={saveReminder} onClose={() => setShowReminderModal(false)} />}
+        {/* Routines List */}
+        {!showBuilder && (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold">Your Routines</h2>
+
+            {routines && routines.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {routines.map((routine) => {
+                  const sessions = routine.routine_sessions || []
+                  const totalHours = calculateTotalHours(sessions)
+                  const activeReminders = reminders.filter(
+                    (r) => r.routine_id === routine.id && r.is_active
+                  ).length
+
+                  return (
+                    <Card
+                      key={routine.id}
+                      className="p-4 border-border hover:border-cyan-500/50 transition-colors cursor-pointer"
+                    >
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="font-semibold text-lg text-foreground">
+                            {routine.name}
+                          </h3>
+                          {routine.description && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {routine.description}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Clock className="h-4 w-4 text-cyan-400" />
+                            <span>
+                              {totalHours.toFixed(1)}h of {routine.daily_hours}h
+                              daily
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-sm">
+                            <Calendar className="h-4 w-4 text-cyan-400" />
+                            <span>{sessions.length} sessions</span>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-sm">
+                            <BookOpen className="h-4 w-4 text-cyan-400" />
+                            <span>{activeReminders} reminders active</span>
+                          </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-border">
+                          <details className="text-sm">
+                            <summary className="cursor-pointer font-medium text-cyan-400 hover:text-cyan-300">
+                              View Sessions ({sessions.length})
+                            </summary>
+                            <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
+                              {sessions.map((session) => (
+                                <div
+                                  key={session.id}
+                                  className={`flex justify-between items-center text-xs p-2 rounded ${
+                                    session.is_break
+                                      ? "bg-yellow-500/10 border border-yellow-500/30"
+                                      : "bg-background border border-border"
+                                  }`}
+                                >
+                                  <div>
+                                    <div className="font-medium">
+                                      {session.session_name}
+                                    </div>
+                                    {session.subject && (
+                                      <div className="text-muted-foreground">
+                                        {session.subject}
+                                      </div>
+                                    )}
+                                    {session.notes && (
+                                      <div className="text-muted-foreground text-xs">
+                                        {session.notes}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="text-muted-foreground whitespace-nowrap ml-2">
+                                    {session.start_time} - {session.end_time}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+                        </div>
+                      </div>
+                    </Card>
+                  )
+                })}
+              </div>
+            ) : (
+              <Card className="p-8 border-border text-center">
+                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground mb-4">
+                  No routines yet. Create your first advanced routine to get
+                  started!
+                </p>
+                <Button
+                  onClick={() => setShowBuilder(true)}
+                  className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create First Routine
+                </Button>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Active Reminders Section */}
+        {!showBuilder && reminders && reminders.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold">Active Reminders</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {reminders
+                .filter((r) => r.is_active)
+                .map((reminder) => {
+                  const session = reminder.routine_sessions
+                  return (
+                    <Card
+                      key={reminder.id}
+                      className="p-4 border-cyan-500/30 bg-cyan-500/5"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h4 className="font-semibold text-cyan-400">
+                              {session?.session_name}
+                            </h4>
+                            {session?.subject && (
+                              <p className="text-sm text-muted-foreground">
+                                {session.subject}
+                              </p>
+                            )}
+                          </div>
+                          <Clock className="h-5 w-5 text-cyan-400" />
+                        </div>
+                        <p className="text-sm">
+                          Reminder at {reminder.reminder_time}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Notification type: {reminder.reminder_type}
+                        </p>
+                      </div>
+                    </Card>
+                  )
+                })}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

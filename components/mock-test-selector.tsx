@@ -7,14 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, BookOpen } from 'lucide-react'
 
 interface MockTestSelectorProps {
-  onTestSelect: (examType: string, subject: string | null, difficulty: string) => void
+  onTestSelect: (examType: string) => void
   isLoading?: boolean
 }
 
 export function MockTestSelector({ onTestSelect, isLoading = false }: MockTestSelectorProps) {
   const [examType, setExamType] = useState('cbse_10')
-  const [subject, setSubject] = useState('mathematics')
-  const [difficulty, setDifficulty] = useState('medium')
+  const [subject, setSubject] = useState('')
+  const [difficulty, setDifficulty] = useState('easy')
 
   const examOptions = [
     { value: 'cbse_9', label: 'CBSE Class 9' },
@@ -25,27 +25,16 @@ export function MockTestSelector({ onTestSelect, isLoading = false }: MockTestSe
     { value: 'jee_advanced', label: 'JEE Advanced (All Subjects)' },
   ]
 
-  const subjectByExam: Record<string, string[]> = {
-    cbse_9: ['mathematics', 'science', 'english', 'social_studies'],
-    cbse_10: ['mathematics', 'science', 'english', 'social_studies'],
-    cbse_11: ['physics', 'chemistry', 'mathematics', 'biology'],
-    cbse_12: ['physics', 'chemistry', 'mathematics', 'biology'],
-    jee_mains: ['all'], // All subjects in single test
-    jee_advanced: ['all'], // All subjects in single test
-  }
+  const currentSubjects = ['mathematics', 'physics', 'chemistry', 'biology']
 
-  const currentSubjects = subjectByExam[examType] || []
   const isJEE = examType.startsWith('jee_')
 
   const handleExamChange = (value: string) => {
     setExamType(value)
-    const firstSubject = subjectByExam[value]?.[0] || 'all'
-    setSubject(firstSubject)
   }
 
   const handleGenerateTest = () => {
-    // For JEE, pass null for subject (it will generate all subjects)
-    onTestSelect(examType, isJEE ? null : subject, difficulty)
+    onTestSelect(examType)
   }
 
   return (
@@ -55,11 +44,11 @@ export function MockTestSelector({ onTestSelect, isLoading = false }: MockTestSe
         <h2 className="text-2xl font-semibold text-foreground">Generate Mock Test</h2>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-1 gap-4">
         {/* Exam Type */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">Select Exam</label>
-          <Select value={examType} onValueChange={handleExamChange}>
+          <Select value={examType} onValueChange={setExamType}>
             <SelectTrigger className="bg-secondary border-border">
               <SelectValue />
             </SelectTrigger>
@@ -108,24 +97,15 @@ export function MockTestSelector({ onTestSelect, isLoading = false }: MockTestSe
 
       <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
         <p className="text-sm text-muted-foreground">
-          📚 Questions are AI-generated based on previous year exam papers (PYQs). For JEE Advanced,
-          some questions will have multiple correct options. Total test time: 3 hours (JEE Mains/Advanced) or 1 hour (CBSE).
+          📚 <strong>Questions from:</strong> Official PYQs, Byju's, Allen Academy, Physics Wallah
+        </p>
+        <p className="text-sm text-muted-foreground">
+          ✓ Each test maintains the exact chapter distribution from actual exams
         </p>
       </div>
 
-      <Button
-        onClick={handleGenerateTest}
-        disabled={isLoading}
-        className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Generating Test...
-          </>
-        ) : (
-          'Generate Mock Test'
-        )}
+      <Button onClick={handleGenerateTest} disabled={isLoading} className="w-full">
+        {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Generate Test'}
       </Button>
     </Card>
   )

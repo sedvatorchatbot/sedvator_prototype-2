@@ -1,14 +1,37 @@
 import { createClient } from '@/lib/supabase/server'
-import { selectQuestionsWithDistribution, cbseClass10PYQs, jeeMainsPYQs, jeeAdvancedPYQs } from '@/lib/pyq-database'
+import {
+  selectQuestionsWithDistribution,
+  cbseClass9PYQs,
+  cbseClass10PYQs,
+  cbseClass11PYQs,
+  cbseClass12PYQs,
+  jeeMainsPYQs,
+  jeeAdvancedPYQs,
+  examDistributions,
+  type PYQQuestion,
+} from '@/lib/pyq-database'
 
-function getPYQsForExam(examType: string) {
+const allQuestions = [
+  ...cbseClass9PYQs,
+  ...cbseClass10PYQs,
+  ...cbseClass11PYQs,
+  ...cbseClass12PYQs,
+  ...jeeMainsPYQs,
+  ...jeeAdvancedPYQs,
+]
+
+const distribution = examDistributions
+
+function getAllQuestionsForExam(examType: string): PYQQuestion[] {
   switch (examType) {
     case 'cbse_9':
+      return cbseClass9PYQs
     case 'cbse_10':
       return cbseClass10PYQs
     case 'cbse_11':
+      return cbseClass11PYQs
     case 'cbse_12':
-      return cbseClass10PYQs // Can be expanded with class 11/12 specific PYQs
+      return cbseClass12PYQs
     case 'jee_mains':
       return jeeMainsPYQs
     case 'jee_advanced':
@@ -36,16 +59,16 @@ function getTestConfig(examType: string) {
     },
     cbse_11: {
       name: 'CBSE Class 11 Mock Test',
-      totalQuestions: 10,
-      totalMarks: 10,
-      timeLimitMinutes: 60,
+      totalQuestions: 15,
+      totalMarks: 15,
+      timeLimitMinutes: 90,
       markingScheme: { correct: 1, incorrect: 0 },
     },
     cbse_12: {
       name: 'CBSE Class 12 Mock Test',
-      totalQuestions: 10,
-      totalMarks: 10,
-      timeLimitMinutes: 60,
+      totalQuestions: 15,
+      totalMarks: 15,
+      timeLimitMinutes: 90,
       markingScheme: { correct: 1, incorrect: 0 },
     },
     jee_mains: {
@@ -77,6 +100,25 @@ function getTestConfig(examType: string) {
   return configs[examType] || configs.cbse_10
 }
 
+function getPYQsForExam(examType: string): PYQQuestion[] {
+  switch (examType) {
+    case 'cbse_9':
+      return cbseClass9PYQs
+    case 'cbse_10':
+      return cbseClass10PYQs
+    case 'cbse_11':
+      return cbseClass11PYQs
+    case 'cbse_12':
+      return cbseClass12PYQs
+    case 'jee_mains':
+      return jeeMainsPYQs
+    case 'jee_advanced':
+      return jeeAdvancedPYQs
+    default:
+      return cbseClass10PYQs
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const { examType, difficulty } = await request.json()
@@ -86,8 +128,13 @@ export async function POST(request: Request) {
     const config = getTestConfig(examType)
     const pyqs = getPYQsForExam(examType)
 
-    // Select questions maintaining PYQ distribution
-    const selectedQuestions = selectQuestionsWithDistribution(pyqs, config.totalQuestions, difficulty)
+    // Select questions maintaining exam_id ISOLATION and PYQ distribution
+    const selectedQuestions = selectQuestionsWithDistribution(
+      allQuestions,
+      config.totalQuestions,
+      examType,
+      distribution
+    )
 
     console.log('[v0] Selected', selectedQuestions.length, 'questions with distribution')
 

@@ -41,34 +41,34 @@ function getAllQuestionsForExam(examType: string): PYQQuestion[] {
   }
 }
 
-function getTestConfig(examType: string) {
+function getTestConfig(examType: string, jeeAdvancedTime?: number) {
   const configs: Record<string, any> = {
     cbse_9: {
       name: 'CBSE Class 9 Mock Test',
-      totalQuestions: 10,
-      totalMarks: 10,
-      timeLimitMinutes: 60,
+      totalQuestions: 38,
+      totalMarks: 38,
+      timeLimitMinutes: 180,
       markingScheme: { correct: 1, incorrect: 0 },
     },
     cbse_10: {
       name: 'CBSE Class 10 Mock Test',
-      totalQuestions: 10,
-      totalMarks: 10,
-      timeLimitMinutes: 60,
+      totalQuestions: 40,
+      totalMarks: 40,
+      timeLimitMinutes: 180,
       markingScheme: { correct: 1, incorrect: 0 },
     },
     cbse_11: {
       name: 'CBSE Class 11 Mock Test',
-      totalQuestions: 15,
-      totalMarks: 15,
-      timeLimitMinutes: 90,
+      totalQuestions: 35,
+      totalMarks: 35,
+      timeLimitMinutes: 180,
       markingScheme: { correct: 1, incorrect: 0 },
     },
     cbse_12: {
       name: 'CBSE Class 12 Mock Test',
-      totalQuestions: 15,
-      totalMarks: 15,
-      timeLimitMinutes: 90,
+      totalQuestions: 40,
+      totalMarks: 40,
+      timeLimitMinutes: 180,
       markingScheme: { correct: 1, incorrect: 0 },
     },
     jee_mains: {
@@ -87,7 +87,7 @@ function getTestConfig(examType: string) {
       name: 'JEE Advanced Full Test (All Subjects)',
       totalQuestions: 75,
       totalMarks: 300,
-      timeLimitMinutes: 180,
+      timeLimitMinutes: jeeAdvancedTime ? jeeAdvancedTime * 60 : 180,
       markingScheme: { correct: 4, incorrect: -2 },
       sections: [
         { subject: 'Physics', mcqCount: 20, integerCount: 5 },
@@ -121,11 +121,11 @@ function getPYQsForExam(examType: string): PYQQuestion[] {
 
 export async function POST(request: Request) {
   try {
-    const { examType, difficulty } = await request.json()
+    const { examType, jeeAdvancedTime, difficulty } = await request.json()
 
-    console.log('[v0] Generating mock test for:', examType, 'difficulty:', difficulty)
+    console.log('[v0] Generating mock test for:', examType, 'JEE Advanced Time:', jeeAdvancedTime)
 
-    const config = getTestConfig(examType)
+    const config = getTestConfig(examType, jeeAdvancedTime)
     const pyqs = getPYQsForExam(examType)
 
     // Select questions maintaining exam_id ISOLATION and PYQ distribution

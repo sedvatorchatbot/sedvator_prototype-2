@@ -33,11 +33,11 @@ export function MockTestHub() {
   const [testResult, setTestResult] = useState<any | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const handleTestSelect = async (examType: string) => {
+  const handleTestSelect = async (examType: string, jeeAdvancedTime?: number) => {
     setIsGenerating(true)
     setErrorMessage(null)
     try {
-      console.log('[v0] Generating mock test for exam:', examType)
+      console.log('[v0] Generating mock test for exam:', examType, 'JEE Time:', jeeAdvancedTime)
 
       // Generate test
       const generateResponse = await fetch('/api/mock-test/generate', {
@@ -45,7 +45,7 @@ export function MockTestHub() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           examType,
-          difficulty: 'medium', // Always use medium for PYQ-based tests
+          jeeAdvancedTime,
         }),
       })
 

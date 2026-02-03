@@ -143,7 +143,7 @@ export function NotificationPermissionManager() {
     }
   }
 
-  const handleTestBrowserNotification = () => {
+  const handleTestBrowserNotification = async () => {
     console.log('[v0] Testing browser notification, permission:', 'Notification' in window ? Notification.permission : 'N/A')
     
     if (!('Notification' in window)) {
@@ -158,16 +158,31 @@ export function NotificationPermissionManager() {
     
     console.log('[v0] Sending test browser notification')
     
-    // Show test notification directly
     try {
-      new Notification('Test Notification 🔔', {
-        body: 'This is what your study reminders will look like',
-        icon: '/icon.svg',
-        badge: '/icon.svg',
-        tag: 'test-notification',
-        requireInteraction: false,
-      })
-      setMessage('✓ Test notification sent! Check your notification area or notification drawer.')
+      // Try to use Service Worker first (required on mobile)
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        const registration = await navigator.serviceWorker.ready
+        console.log('[v0] Using Service Worker to show notification')
+        registration.showNotification('Test Notification 🔔', {
+          body: 'This is what your study reminders will look like',
+          icon: '/icon.svg',
+          badge: '/icon.svg',
+          tag: 'test-notification',
+          requireInteraction: false,
+        })
+        setMessage('✓ Test notification sent! Check your notification area or notification drawer.')
+      } else {
+        // Fallback for desktop browsers
+        console.log('[v0] Using direct Notification API')
+        new Notification('Test Notification 🔔', {
+          body: 'This is what your study reminders will look like',
+          icon: '/icon.svg',
+          badge: '/icon.svg',
+          tag: 'test-notification',
+          requireInteraction: false,
+        })
+        setMessage('✓ Test notification sent! Check your notification area or notification drawer.')
+      }
     } catch (error) {
       console.error('[v0] Error showing notification:', error)
       setMessage('✗ Failed to send notification - ' + (error instanceof Error ? error.message : 'Unknown error'))

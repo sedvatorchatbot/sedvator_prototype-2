@@ -23,12 +23,12 @@ The routine/timetable feature allows users to create optimized study schedules u
 - **Why Groq?**: Fast inference (lowest latency), free tier, OpenAI-compatible API
 
 **Location**: `/lib/ai-provider.ts`
-```typescript
+\`\`\`typescript
 export async function generateAIResponse(options: GenerateOptions): Promise<string> {
   // Uses Groq API with llama-3.3-70b model
   // Returns string response from AI
 }
-```
+\`\`\`
 
 #### 2. **Backend API Route**
 - **Endpoint**: `POST /api/routine/generate-ai`
@@ -36,7 +36,7 @@ export async function generateAIResponse(options: GenerateOptions): Promise<stri
 - **Function**: Receives user prompt → sends to Groq → parses JSON → stores in database
 
 **Process Flow**:
-```
+\`\`\`
 User Input (goal/subject) 
   ↓
 /api/routine/generate-ai (receives prompt)
@@ -63,7 +63,7 @@ AI returns JSON with routine structure:
 insertBreaksIntoSchedule() adds breaks automatically
   ↓
 Database INSERT into 'routines' and 'routine_sessions'
-```
+\`\`\`
 
 #### 3. **Database Storage**
 - **Service**: Supabase (PostgreSQL)
@@ -73,7 +73,7 @@ Database INSERT into 'routines' and 'routine_sessions'
   - `routine_reminders` - Reminder settings
 
 **Routine Table Schema**:
-```sql
+\`\`\`sql
 CREATE TABLE routines (
   id UUID PRIMARY KEY,
   user_id UUID NOT NULL,
@@ -83,10 +83,10 @@ CREATE TABLE routines (
   created_at TIMESTAMP,
   updated_at TIMESTAMP
 )
-```
+\`\`\`
 
 **Routine Sessions Table Schema**:
-```sql
+\`\`\`sql
 CREATE TABLE routine_sessions (
   id UUID PRIMARY KEY,
   routine_id UUID NOT NULL (Foreign Key),
@@ -100,7 +100,7 @@ CREATE TABLE routine_sessions (
   notes TEXT,
   created_at TIMESTAMP
 )
-```
+\`\`\`
 
 #### 4. **Frontend Component**
 - **Component**: `AIRoutineGenerator` (`/components/ai-routine-generator.tsx`)
@@ -111,14 +111,14 @@ CREATE TABLE routine_sessions (
   - Loading state during generation
   - Error handling and display
 
-```typescript
+\`\`\`typescript
 // Component calls:
 const response = await fetch('/api/routine/generate-ai', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ prompt, routineName })
 })
-```
+\`\`\`
 
 #### 5. **Alarm System**
 - **Functions**: `setDeviceAlarm()`, `startAlarmChecker()`, `stopAlarmChecker()`
@@ -168,7 +168,7 @@ Sedvator offers 6 interactive games that are **FULLY AI-GENERATED** based on use
 - **Difficulty Levels**: basic, intermediate, advanced, expert
 
 #### Generation Process
-```
+\`\`\`
 User Request (topic + difficulty)
   ↓
 /api/quiz/generate/route.ts
@@ -190,10 +190,10 @@ Database INSERT into 'quizzes' and 'quiz_questions'
 Supabase stores quiz with all questions
   ↓
 Frontend receives quiz_id + questions array
-```
+\`\`\`
 
 #### Database Schema
-```sql
+\`\`\`sql
 CREATE TABLE quizzes (
   id UUID PRIMARY KEY,
   user_id UUID NOT NULL,
@@ -213,10 +213,10 @@ CREATE TABLE quiz_questions (
   question_order INT,
   created_at TIMESTAMP
 )
-```
+\`\`\`
 
 #### JSON Sanitization
-```typescript
+\`\`\`typescript
 function sanitizeJSON(str: string): string {
   // Remove markdown code blocks
   str = str.replace(/```json\s*/gi, "").replace(/```\s*/gi, "")
@@ -229,16 +229,16 @@ function sanitizeJSON(str: string): string {
   // Fix trailing commas, smart quotes, control characters
   return str
 }
-```
+\`\`\`
 
 #### Fallback System
 If AI generation fails, system returns hardcoded fallback quiz:
-```typescript
+\`\`\`typescript
 function generateFallbackQuiz(topic: string, count: number): any[] {
   // Returns 3 basic quiz questions as backup
   // Prevents complete failure
 }
-```
+\`\`\`
 
 #### Frontend Component
 - **Component**: `QuizGame` (`/components/quiz-game.tsx`)
@@ -262,7 +262,7 @@ function generateFallbackQuiz(topic: string, count: number): any[] {
 - **Difficulty**: 4 levels with different instruction sets
 
 #### Generation Process
-```
+\`\`\`
 User Request (topic + content source + difficulty)
   ↓
 /api/flashcards/generate/route.ts
@@ -288,10 +288,10 @@ JSON parsing extracts flashcard data
 Database INSERT into 'flashcard_sets' and 'flashcards'
   ↓
 Supabase stores complete set
-```
+\`\`\`
 
 #### Database Schema
-```sql
+\`\`\`sql
 CREATE TABLE flashcard_sets (
   id UUID PRIMARY KEY,
   user_id UUID NOT NULL,
@@ -301,7 +301,7 @@ CREATE TABLE flashcard_sets (
   cards JSONB NOT NULL, -- Array of {term, definition}
   created_at TIMESTAMP
 )
-```
+\`\`\`
 
 #### Frontend Component
 - **Component**: `FlashcardGame` (`/components/flashcard-game.tsx`)
@@ -381,7 +381,7 @@ AI-powered chatbot using Groq LLM with internet search capabilities and text-to-
 
 ### Core Tables (Supabase/PostgreSQL)
 
-```sql
+\`\`\`sql
 -- Users (via Supabase Auth)
 CREATE TABLE profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id),
@@ -510,7 +510,7 @@ CREATE TABLE file_attachments (
   extracted_text TEXT,
   created_at TIMESTAMP
 )
-```
+\`\`\`
 
 ---
 
@@ -519,14 +519,14 @@ CREATE TABLE file_attachments (
 ### Summary of All 19 API Routes
 
 #### Authentication APIs
-```
+\`\`\`
 POST   /api/auth/signup      - Create new user account
 POST   /api/auth/login       - User login
 DELETE /api/account/delete   - Delete user account
-```
+\`\`\`
 
 #### Routine APIs
-```
+\`\`\`
 GET    /api/routine          - Get user's routines
 POST   /api/routine          - Create routine manually
 GET    /api/routine/[id]     - Get specific routine
@@ -534,43 +534,43 @@ PUT    /api/routine/[id]     - Update routine
 DELETE /api/routine/[id]     - Delete routine
 POST   /api/routine/generate-ai - Generate routine with AI
 POST   /api/routine/advanced - Advanced routine builder
-```
+\`\`\`
 
 #### Quiz APIs
-```
+\`\`\`
 POST   /api/quiz/generate    - Generate quiz with AI
 POST   /api/quiz/attempt     - Save quiz attempt/score
-```
+\`\`\`
 
 #### Flashcard APIs
-```
+\`\`\`
 POST   /api/flashcards/generate - Generate flashcards with AI
-```
+\`\`\`
 
 #### Game APIs
-```
+\`\`\`
 POST   /api/game/score       - Save game scores
-```
+\`\`\`
 
 #### Chatbot APIs
-```
+\`\`\`
 POST   /api/chat            - Send chat message, get AI response
 POST   /api/search          - Internet search via SearchAPI
 POST   /api/tts             - Text-to-speech
 POST   /api/files/upload    - Upload study materials
-```
+\`\`\`
 
 #### Notification APIs
-```
+\`\`\`
 POST   /api/notifications/permissions - Save notification preferences
 POST   /api/reminders/sync           - Sync reminders with device
-```
+\`\`\`
 
 #### Other APIs
-```
+\`\`\`
 POST   /api/mood             - Track user mood/wellness
 POST   /api/mock-test/attempt - Save mock test attempts
-```
+\`\`\`
 
 ---
 
@@ -615,7 +615,7 @@ POST   /api/mock-test/attempt - Save mock test attempts
 
 ## FLOW DIAGRAM: HOW IT ALL CONNECTS
 
-```
+\`\`\`
 ┌─────────────────────────────────────────────────────────────────┐
 │                          SEDVATOR PLATFORM                       │
 └─────────────────────────────────────────────────────────────────┘
@@ -676,7 +676,7 @@ PERSISTENCE LAYER
         ├─→ Chat History
         ├─→ Flashcards
         └─→ Reminders
-```
+\`\`\`
 
 ---
 

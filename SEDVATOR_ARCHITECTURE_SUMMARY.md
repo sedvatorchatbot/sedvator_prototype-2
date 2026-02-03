@@ -483,7 +483,7 @@ Sedvator is an AI-powered educational platform with voice/text chatbot, gamified
 
 ## 📈 Component Hierarchy
 
-```
+\`\`\`
 Layout (app/layout.tsx)
 ├── ThemeProvider
 ├── Pages
@@ -511,7 +511,7 @@ Layout (app/layout.tsx)
     ├── ThemeToggle
     ├── NotificationPermissionManager
     └── UI Components (Button, Card, Input, etc.)
-```
+\`\`\`
 
 ---
 

@@ -97,31 +97,47 @@ export function sendBrowserNotification(
 
     if (Notification.permission === 'granted') {
       console.log('[v0] Sending notification:', title)
-      // Use service worker if available for better reliability
-      if ('serviceWorker' in navigator && 'registration' in navigator.serviceWorker) {
+      
+      // Use service worker if available (required on mobile)
+      if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then((registration) => {
           registration.showNotification(title, {
             icon: '/icon.svg',
             badge: '/icon.svg',
+            requireInteraction: true,
             ...options,
           })
+          console.log('[v0] Notification sent via Service Worker')
+        }).catch((error) => {
+          console.error('[v0] Service Worker notification failed:', error)
+          // Fallback to direct notification only if Service Worker fails
+          try {
+            new Notification(title, {
+              icon: '/icon.svg',
+              badge: '/icon.svg',
+              requireInteraction: true,
+              ...options,
+            })
+          } catch (e) {
+            console.error('[v0] Direct notification also failed:', e)
+          }
         })
-      } else {
-        // Fallback to direct notification
-        const notification = new Notification(title, {
-          body: options?.body,
-          icon: options?.icon || '/icon.svg',
-          tag: options?.tag || 'study-reminder',
-          badge: options?.badge || '/icon.svg',
-          requireInteraction: true, // Keep notification visible until user interacts
-        })
-
-        // Auto-close after 10 seconds if not interacted
-        setTimeout(() => {
-          notification.close()
-        }, 10000)
-
         return true
+      } else {
+        // No Service Worker available - try direct notification
+        try {
+          new Notification(title, {
+            icon: '/icon.svg',
+            badge: '/icon.svg',
+            requireInteraction: true,
+            ...options,
+          })
+          console.log('[v0] Notification sent via direct API')
+          return true
+        } catch (error) {
+          console.error('[v0] Direct notification failed:', error)
+          return false
+        }
       }
     }
 

@@ -27,22 +27,22 @@ Used modern OKLCH color format for perceptually uniform colors across light/dark
 - Better saturation control
 
 ### Typography
-```
+\`\`\`
 Font Family: Geist (Primary)
 Font Family: Geist Mono (Code/Technical)
 - Loaded from Google Fonts
 - Antialiased rendering
 - Font smoothing applied for better readability
-```
+\`\`\`
 
 ### Spacing & Radius
-```
+\`\`\`
 Base Radius: 0.625rem (10px)
 - Radius-sm: 6px
 - Radius-md: 8px
 - Radius-lg: 10px (default)
 - Radius-xl: 14px
-```
+\`\`\`
 
 ---
 
@@ -85,7 +85,7 @@ Used `tailwindcss-animate` and `tw-animate-css` for smooth animations.
 ### Custom Animations in globals.css:
 
 #### Jarvis Avatar Animations
-```css
+\`\`\`css
 .jarvis-glow {
   box-shadow: 0 0 30px oklch(0.6 0.2 200 / 0.3),
               0 0 60px oklch(0.6 0.2 200 / 0.15);
@@ -106,7 +106,7 @@ Used `tailwindcss-animate` and `tw-animate-css` for smooth animations.
   animation: listening-wave 1s ease-in-out infinite;
 }
 /* Vertical scale animation when listening */
-```
+\`\`\`
 
 **Why these animations?**
 - Jarvis glow: Visual feedback that AI is processing
@@ -120,13 +120,13 @@ Used `tailwindcss-animate` and `tw-animate-css` for smooth animations.
 - Loading spinner (built-in Tailwind)
 
 #### Lightning Cursor
-```javascript
+\`\`\`javascript
 Canvas-based animation with:
 - Real-time mouse tracking
 - Tile grid system (40px tiles)
 - Brightness interpolation
 - Smooth fade effects
-```
+\`\`\`
 
 **Why Canvas?**
 - Better performance than DOM updates
@@ -146,7 +146,7 @@ Canvas-based animation with:
 - `AnimatedLogo.tsx` - Loading animation
 
 **Technologies:**
-```
+\`\`\`
 Frontend:
 - Web Speech API (voice input)
 - Speech Synthesis API (voice output)
@@ -163,7 +163,7 @@ Design Elements:
 - Message bubbles with timestamps
 - Typing indicator animation
 - Voice waveform visualization
-```
+\`\`\`
 
 **Why this stack?**
 - Native browser APIs eliminate external dependencies
@@ -182,7 +182,7 @@ Design Elements:
 6. **Word Match Game** - Matching pairs
 
 **Technology Stack:**
-```
+\`\`\`
 Generation:
 - Groq LLM generates unique content
 - JSON structure for consistency
@@ -205,7 +205,7 @@ Database:
   - quiz_questions (individual questions)
   - flashcard_sets (flashcard collections)
   - game_scores (user scores)
-```
+\`\`\`
 
 **Why Groq for generation?**
 - Lightning-fast (50+ tokens/sec)
@@ -222,7 +222,7 @@ Database:
 - `RoutineCard.tsx` - Individual routine display
 
 **Technology Stack:**
-```
+\`\`\`
 Generation:
 - Groq LLM creates optimized schedules
 - Cognitive science principles (harder subjects when fresh)
@@ -251,7 +251,7 @@ Notifications:
 - Browser notifications (Web Notifications API)
 - Phone alarms (Vibration API + Audio Context)
 - Background checking (periodic 30-second checks)
-```
+\`\`\`
 
 **Why this architecture?**
 - Groq creates cognitively optimized schedules
@@ -268,7 +268,7 @@ Notifications:
 - Permission management
 
 **Technology Stack:**
-```
+\`\`\`
 APIs Used:
 - Web Notifications API (desktop alerts)
 - Vibration API (phone feedback)
@@ -290,12 +290,12 @@ Why this approach?
 - Works across browsers and mobile
 - Graceful degradation if unsupported
 - Service Workers enable background mode
-```
+\`\`\`
 
 ### E. AUTHENTICATION
 
 **Technology:**
-```
+\`\`\`
 - Supabase Auth (built-in)
 - PostgreSQL for user storage
 - JWT tokens for sessions
@@ -311,7 +311,7 @@ Why Supabase?
 - Row-Level Security (RLS) built-in
 - Handles password hashing (bcrypt)
 - Session management automatic
-```
+\`\`\`
 
 ---
 
@@ -326,7 +326,7 @@ Why Supabase?
 - Easier to understand and maintain
 
 ### Responsive Breakpoints (Tailwind):
-```
+\`\`\`
 Mobile:    < 640px
 Tablet:    640px - 1024px
 Desktop:   > 1024px
@@ -337,26 +337,26 @@ md: → 768px
 lg: → 1024px
 xl: → 1280px
 2xl: → 1536px
-```
+\`\`\`
 
 ### Example Layout Patterns:
 
 **Hero Section (Chatbot):**
-```jsx
+\`\`\`jsx
 <div className="flex flex-col items-center justify-center min-h-screen">
   <JarvisAvatar size="lg" />
   <Input className="w-full max-w-md" />
 </div>
-```
+\`\`\`
 - Centered vertically & horizontally
 - Responsive width capping
 
 **Game Grid:**
-```jsx
+\`\`\`jsx
 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
   {games.map(game => <GameCard />)}
 </div>
-```
+\`\`\`
 - 1 column on mobile
 - 2 columns on tablet
 - 3 columns on desktop
@@ -387,68 +387,68 @@ xl: → 1280px
 ## 7. PERFORMANCE OPTIMIZATIONS
 
 ### Code Splitting:
-```
+\`\`\`
 Dynamic imports for game components
 Lazy loading for heavy features
 Route-based code splitting (Next.js)
-```
+\`\`\`
 
 ### Image Optimization:
-```
+\`\`\`
 - SVG icons (Lucide React)
 - PNG for app icons
 - WebP support where possible
 - Responsive sizing
-```
+\`\`\`
 
 ### Animation Performance:
-```
+\`\`\`
 - Canvas for complex animations (lightning cursor)
 - CSS transforms (not layout properties)
 - Will-change hints for heavy animations
 - Hardware acceleration enabled
-```
+\`\`\`
 
 ### Bundle Size:
-```
+\`\`\`
 Dependencies optimized:
 - shadcn/ui: Only import used components
 - Lucide React: ~100KB for all icons
 - Groq SDK: Lightweight (~50KB)
 - Tailwind: Purged unused CSS
-```
+\`\`\`
 
 ---
 
 ## 8. SECURITY IMPLEMENTATION
 
 ### Authentication:
-```
+\`\`\`
 - Supabase JWT tokens
 - HTTP-only cookies (session management)
 - Secure session storage
-```
+\`\`\`
 
 ### Data Encryption:
-```
+\`\`\`
 - lib/encryption.ts handles message encryption
 - AES-256 encryption for sensitive content
 - Encrypted storage in database
-```
+\`\`\`
 
 ### API Security:
-```
+\`\`\`
 - Row-Level Security (RLS) on Supabase
 - Environment variables for API keys
 - Server-side validation
 - SQL injection prevention (parameterized queries)
-```
+\`\`\`
 
 ---
 
 ## 9. COMPLETE TECH STACK SUMMARY
 
-```
+\`\`\`
 Frontend:
 ├─ React 19.2.0 (UI framework)
 ├─ Next.js 16.0.10 (Full-stack framework)
@@ -498,7 +498,7 @@ Development:
 ├─ ESLint (Code quality)
 ├─ TypeScript (Type checking)
 └─ Tailwind CSS (Build-time optimization)
-```
+\`\`\`
 
 ---
 
@@ -520,7 +520,7 @@ Development:
 
 ## 11. COMPONENT HIERARCHY
 
-```
+\`\`\`
 App
 ├─ RootLayout
 │  ├─ ThemeProvider (Light/Dark)
@@ -557,13 +557,13 @@ App
    ├─ SpeedQuiz
    ├─ FillBlanksGame
    └─ WordMatchGame
-```
+\`\`\`
 
 ---
 
 ## 12. DATA FLOW EXAMPLE: Quiz Generation
 
-```
+\`\`\`
 User Input (Topic, Difficulty)
     ↓
 ChatInterface captures input
@@ -587,7 +587,7 @@ User answers
 Score calculation & save to game_scores table
     ↓
 Display results with animations
-```
+\`\`\`
 
 ---
 

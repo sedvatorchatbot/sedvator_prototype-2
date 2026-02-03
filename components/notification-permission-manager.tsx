@@ -145,21 +145,32 @@ export function NotificationPermissionManager() {
 
   const handleTestBrowserNotification = () => {
     console.log('[v0] Testing browser notification, permission:', 'Notification' in window ? Notification.permission : 'N/A')
-    if ('Notification' in window && Notification.permission !== 'granted') {
-      setMessage('✗ Notifications permission not granted. Please enable notifications first.')
+    
+    if (!('Notification' in window)) {
+      setMessage('✗ Your browser does not support notifications')
+      return
+    }
+    
+    if (Notification.permission !== 'granted') {
+      setMessage('✗ Notifications permission not granted. Please enable notifications in browser settings.')
       return
     }
     
     console.log('[v0] Sending test browser notification')
-    const result = sendBrowserNotification('Test Notification 🔔', {
-      body: 'This is what your study reminders will look like',
-      icon: '/icon.svg',
-    })
     
-    if (result) {
-      setMessage('✓ Test notification sent! Check your notification area.')
-    } else {
-      setMessage('✗ Failed to send notification')
+    // Show test notification directly
+    try {
+      new Notification('Test Notification 🔔', {
+        body: 'This is what your study reminders will look like',
+        icon: '/icon.svg',
+        badge: '/icon.svg',
+        tag: 'test-notification',
+        requireInteraction: false,
+      })
+      setMessage('✓ Test notification sent! Check your notification area or notification drawer.')
+    } catch (error) {
+      console.error('[v0] Error showing notification:', error)
+      setMessage('✗ Failed to send notification - ' + (error instanceof Error ? error.message : 'Unknown error'))
     }
   }
 
@@ -314,12 +325,15 @@ export function NotificationPermissionManager() {
         </Card>
       </div>
 
-      <div className="p-3 bg-background border border-border rounded-lg text-xs text-muted-foreground space-y-1">
+      <div className="p-3 bg-background border border-border rounded-lg text-xs text-muted-foreground space-y-2">
         <p>
           💡 <strong>How it works:</strong> When you enable notifications, automatic alarms will trigger at each study session time in your routine.
         </p>
         <p>
-          Both browser and phone alarms will alert you with notifications, vibrations, and sounds.
+          📱 <strong>Mobile note:</strong> On mobile phones, keep the app open in a browser tab or use a compatible browser (Chrome, Edge, Firefox). Web notifications on mobile work best when permissions are granted. Browser notifications may not show reliably in background, but your phone will vibrate and play alarm sounds at set times.
+        </p>
+        <p>
+          Keep the app tab active or check back periodically for automatic alarm triggering to work reliably.
         </p>
       </div>
     </div>

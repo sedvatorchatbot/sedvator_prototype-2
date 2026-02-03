@@ -124,11 +124,6 @@ export default function LandingPage() {
               description="Get answers from across the web. Sedvator can search for the latest information, books, and resources."
             />
             <FeatureCard
-              icon={<Search className="w-6 h-6" />}
-              title="Resource Discovery"
-              description="Find the best articles, videos, and tutorials from across the web, curated for your topic."
-            />
-            <FeatureCard
               icon={<Calendar className="w-6 h-6" />}
               title="Study Routines"
               description="Generate personalized study schedules and set reminders to stay on track."

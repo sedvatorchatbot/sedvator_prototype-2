@@ -9,7 +9,7 @@ import { AIRoutineGenerator } from "@/components/ai-routine-generator"
 import { SimpleRoutineGenerator } from "@/components/simple-routine-generator"
 import { NotificationPermissionManager } from "@/components/notification-permission-manager"
 import { AdvancedRoutineBuilder } from "@/components/advanced-routine-builder"
-import { setDeviceAlarm } from "@/lib/notifications"
+import { setDeviceAlarm, startAlarmChecker, stopAlarmChecker } from "@/lib/notifications"
 
 interface RoutineDashboardProps {
   user: any
@@ -32,11 +32,27 @@ export function RoutineDashboard({
   const [alarmScheduled, setAlarmScheduled] = useState<string | null>(null)
   const [alarmsInitialized, setAlarmsInitialized] = useState(false)
 
-  // Setup alarms only once on mount with initial reminders
+  // Setup alarms only once on mount with initial reminders, and start periodic checker
   useEffect(() => {
     if (!alarmsInitialized && initialReminders.length > 0) {
       setupAlarms()
       setAlarmsInitialized(true)
+      startAlarmChecker() // Start background alarm checker
+    }
+
+    // Handle app visibility changes (when user comes back to tab)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('[v0] App regained focus, re-checking alarms')
+        setupAlarms() // Re-setup alarms when user comes back
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      stopAlarmChecker() // Cleanup on unmount
     }
   }, [alarmsInitialized])
 

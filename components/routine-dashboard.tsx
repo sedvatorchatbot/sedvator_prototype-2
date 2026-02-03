@@ -9,7 +9,7 @@ import { AIRoutineGenerator } from "@/components/ai-routine-generator"
 import { SimpleRoutineGenerator } from "@/components/simple-routine-generator"
 import { NotificationPermissionManager } from "@/components/notification-permission-manager"
 import { AdvancedRoutineBuilder } from "@/components/advanced-routine-builder"
-import { setDeviceAlarm } from "@/lib/notifications"
+import { setDeviceAlarm, startAlarmChecker, stopAlarmChecker } from "@/lib/notifications"
 
 interface RoutineDashboardProps {
   user: any

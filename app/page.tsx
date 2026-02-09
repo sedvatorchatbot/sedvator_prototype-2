@@ -3,7 +3,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { JarvisAvatar } from "@/components/jarvis-avatar"
 import { AnimatedLogo } from "@/components/animated-logo"
-import { MessageSquare, Search, Brain, Calendar, Gamepad2 } from "lucide-react"
+import { MessageSquare, Search, Brain, Calendar, Gamepad2, TrendingUp } from "lucide-react"
 import { LightningCursor } from "@/components/lightning-cursor"
 import { ThemeToggle } from "@/components/theme-toggle"
 
@@ -26,6 +26,13 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             <ThemeToggle />
+            <Link href="/finance">
+              <Button variant="ghost" size="sm" className="text-xs sm:text-sm text-muted-foreground hover:text-foreground">
+                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Finance</span>
+                <span className="sm:hidden">Finance</span>
+              </Button>
+            </Link>
             <Link href="/games">
               <Button variant="ghost" size="sm" className="text-xs sm:text-sm text-muted-foreground hover:text-foreground">
                 <Gamepad2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
@@ -127,6 +134,11 @@ export default function LandingPage() {
               icon={<Calendar className="w-6 h-6" />}
               title="Study Routines"
               description="Generate personalized study schedules and set reminders to stay on track."
+            />
+            <FeatureCard
+              icon={<TrendingUp className="w-6 h-6" />}
+              title="Finance Analysis"
+              description="Upload financial documents and analyze data with AI. Extract metrics, summaries, and insights from PDFs, CSV, or JSON."
             />
             <FeatureCard
               icon={<Gamepad2 className="w-6 h-6" />}

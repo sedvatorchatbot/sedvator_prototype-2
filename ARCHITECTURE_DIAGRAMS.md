@@ -2,7 +2,7 @@
 
 ## System Architecture
 
-```
+\`\`\`
 ┌─────────────────────────────────────────────────────────────────┐
 │                     SEDVATOR AI PLATFORM                        │
 │                   Data & Finance Analysis                       │
@@ -99,11 +99,11 @@
 │  All tables protected with Row-Level Security (RLS)           │
 │  Indexes: user_id, ticker, api usage tracking                │
 └────────────────────────────────────────────────────────────────┘
-```
+\`\`\`
 
 ## Analysis Pipeline
 
-```
+\`\`\`
 INPUT
   │
   ├─ File Upload (CSV/JSON)
@@ -167,11 +167,11 @@ INPUT
   ├─ JSON response
   ├─ Confidence score
   └─ Timestamp
-```
+\`\`\`
 
 ## API Provider Fallback Flow
 
-```
+\`\`\`
         User Request
             │
             ▼
@@ -219,11 +219,11 @@ INPUT
              │
              ▼
         USER RESPONSE
-```
+\`\`\`
 
 ## Security Model
 
-```
+\`\`\`
 ┌─────────────────────────────────────────┐
 │         User Request                    │
 │    /api/finance/analyze                 │
@@ -271,11 +271,11 @@ INPUT
 ┌─────────────────────▼──────────────────┐
 │    Secure Response to User              │
 └─────────────────────────────────────────┘
-```
+\`\`\`
 
 ## Data Flow Example
 
-```
+\`\`\`
 User uploads:
 ├─ File: "Q4_Financial_Report.csv"
 ├─ Size: 250KB
@@ -324,13 +324,13 @@ Return to user:
 ├─ Results JSON
 ├─ Confidence: 85%
 └─ Timestamp
-```
+\`\`\`
 
 ---
 
 ## Performance Optimization
 
-```
+\`\`\`
 Request comes in
     │
     ├─ Check cache (market data)
@@ -349,7 +349,7 @@ Request comes in
     └─ Return response with metadata
 
 Result: 70-80% fewer API calls!
-```
+\`\`\`
 
 ---
 

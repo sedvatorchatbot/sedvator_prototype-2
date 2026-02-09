@@ -149,6 +149,35 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Finance CTA Section */}
+      <section className="py-12 sm:py-16 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-gradient-to-br from-cyan-500/10 to-emerald-600/10 border border-cyan-500/20 rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-12">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8">
+              <div className="text-center md:text-left w-full md:w-auto">
+                <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
+                  <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-cyan-400 flex-shrink-0" />
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">Smart Data Analysis</h2>
+                </div>
+                <p className="text-xs sm:text-sm text-muted-foreground max-w-xl">
+                  Upload financial documents, datasets, or market data. Get AI-powered summaries, metrics extraction, and intelligent insights in seconds.
+                </p>
+              </div>
+              <Link href="/finance" className="w-full md:w-auto">
+                <Button
+                  size="lg"
+                  className="w-full md:w-auto bg-gradient-to-r from-cyan-500 to-emerald-600 hover:from-cyan-600 hover:to-emerald-700 text-white px-6 sm:px-8 whitespace-nowrap"
+                >
+                  <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                  <span className="hidden sm:inline">Analyze Data</span>
+                  <span className="sm:hidden">Analyze</span>
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Games CTA Section */}
       <section className="py-12 sm:py-16 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">

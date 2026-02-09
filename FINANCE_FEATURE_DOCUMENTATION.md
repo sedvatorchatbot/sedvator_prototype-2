@@ -54,14 +54,14 @@ All tables include:
 #### 1. `/api/finance/analyze` (POST)
 **Purpose:** Analyzes financial documents and generates insights
 **Payload:**
-```json
+\`\`\`json
 {
   "analysisType": "summary|metrics|insights|qa",
   "rawContent": "string (document content)",
   "query": "string (for Q&A mode)",
   "documentId": "uuid (optional, if previously uploaded)"
 }
-```
+\`\`\`
 
 **Analysis Types:**
 - `summary`: Document summarization + structure detection
@@ -70,7 +70,7 @@ All tables include:
 - `qa`: Natural language Q&A with keyword matching and context extraction
 
 **Response:**
-```json
+\`\`\`json
 {
   "success": true,
   "analysis": {
@@ -80,18 +80,18 @@ All tables include:
   "analysisId": "uuid",
   "timestamp": "ISO-8601"
 }
-```
+\`\`\`
 
 #### 2. `/api/finance/market-data` (POST/GET)
 **Purpose:** Fetches real-time market data with caching
 **Payload:**
-```json
+\`\`\`json
 {
   "ticker": "AAPL",
   "dataType": "price|company_info|news",
   "useCache": true
 }
-```
+\`\`\`
 
 **Features:**
 - Automatic caching (24-hour TTL)
@@ -167,7 +167,7 @@ All tables include:
 
 ## Environment Variables Required
 
-```bash
+\`\`\`bash
 # Finance APIs
 FINNHUB_API_KEY=your_finnhub_key          # Primary provider
 TWELVE_DATA_API_KEY=your_twelve_data_key  # Fallback provider
@@ -176,7 +176,7 @@ ALPHA_VANTAGE_API_KEY=your_alpha_key      # Secondary fallback
 # Supabase (Already configured)
 SUPABASE_URL=...
 SUPABASE_ANON_KEY=...
-```
+\`\`\`
 
 ## Usage Flow
 
@@ -189,13 +189,13 @@ SUPABASE_ANON_KEY=...
 6. **Market Data**: Fetch real-time data alongside analysis
 
 ### Data Flow
-```
+\`\`\`
 User Input → Upload/Paste → Parse Document → Run Analysis → Save to DB → Display Results
                                    ↓
                          Market Data API (optional)
                                    ↓
                          Cache Results (24h)
-```
+\`\`\`
 
 ## Future Enhancements
 
@@ -245,7 +245,7 @@ User Input → Upload/Paste → Parse Document → Run Analysis → Save to DB �
 
 ## Code Organization
 
-```
+\`\`\`
 app/
   finance/
     page.tsx                 # Main page component
@@ -261,7 +261,7 @@ lib/
 components/
   data-upload.tsx           # File upload component
   analysis-results.tsx      # Results display component
-```
+\`\`\`
 
 ## Modular Design Benefits
 

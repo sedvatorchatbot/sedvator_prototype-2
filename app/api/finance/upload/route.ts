@@ -8,17 +8,11 @@ export const maxDuration = 120
 /**
  * POST /api/finance/upload
  * Handles file uploads (PDF, CSV, JSON, text) and extracts content server-side
+ * Works for both authenticated and unauthenticated users (for demo purposes)
  */
 export async function POST(request: NextRequest) {
   try {
     console.log('[v0] Finance upload request received')
-
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     const formData = await request.formData()
     const file = formData.get('file') as File
@@ -48,33 +42,44 @@ export async function POST(request: NextRequest) {
 
     console.log('[v0] File processed successfully, content length:', parsed.content.length)
 
-    // Store in database
-    const { data: doc, error: insertError } = await supabase
-      .from('financial_documents')
-      .insert({
-        user_id: user.id,
-        document_name: file.name,
-        document_type: parsed.type,
-        extracted_content: parsed.content,
-        file_size: file.size,
-        extraction_method: parsed.extractionMethod,
-        page_count: parsed.pageCount,
-      })
-      .select()
-      .single()
+    // Try to save to database if user is authenticated (optional)
+    let docId = null
+    try {
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
 
-    if (insertError) {
-      console.error('[v0] Database insert error:', insertError)
-      return NextResponse.json({ error: 'Failed to store document' }, { status: 500 })
+      if (user) {
+        const { data: doc, error: insertError } = await supabase
+          .from('financial_documents')
+          .insert({
+            user_id: user.id,
+            document_name: file.name,
+            document_type: parsed.type,
+            extracted_content: parsed.content,
+            file_size: file.size,
+            extraction_method: parsed.extractionMethod,
+            page_count: parsed.pageCount,
+          })
+          .select()
+          .single()
+
+        if (!insertError && doc) {
+          docId = doc.id
+          console.log('[v0] Document saved to database:', docId)
+        }
+      }
+    } catch (dbError) {
+      console.log('[v0] Database save skipped (optional):', dbError instanceof Error ? dbError.message : 'Unknown')
+      // Don't fail the upload if database save fails
     }
 
     return NextResponse.json({
       success: true,
       document: {
-        id: doc.id,
-        name: doc.document_name,
-        type: doc.document_type,
-        content: doc.extracted_content,
+        id: docId,
+        name: file.name,
+        type: parsed.type,
+        content: parsed.content,
         extractionMethod: parsed.extractionMethod,
         pageCount: parsed.pageCount,
       },
@@ -82,9 +87,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[v0] Upload error:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to process file',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     )

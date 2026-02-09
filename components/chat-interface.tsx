@@ -28,7 +28,6 @@ import {
   Menu,
   X,
   MoreVertical,
-  TrendingUp,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -767,26 +766,6 @@ export function ChatInterface({
           >
             {isListening ? <MicOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Mic className="h-4 w-4 sm:h-5 sm:w-5" />}
           </Button>
-
-            {/* Finance Button */}
-            <Link href="/finance">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-muted-foreground hover:text-foreground flex-shrink-0"
-                    >
-                      <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Finance Analysis
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </Link>
 
             {/* Send Button */}
           <TooltipProvider>

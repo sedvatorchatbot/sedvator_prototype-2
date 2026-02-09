@@ -39,11 +39,11 @@ Choose what you need:
 Go to **Vercel Dashboard → Settings → Environment Variables**
 
 Add these keys:
-```
+\`\`\`
 FINNHUB_API_KEY=your_key_here
 TWELVE_DATA_API_KEY=your_key_here (optional)
 ALPHA_VANTAGE_API_KEY=your_key_here (optional)
-```
+\`\`\`
 
 ### Step 2: Database Ready
 ✅ Already done - migration executed successfully
@@ -65,7 +65,7 @@ Visit: `https://your-app.com/finance`
 ### Files Created (11 new files, 1,900+ lines)
 
 #### Backend (5 files)
-```
+\`\`\`
 ✅ lib/finance-api.ts (249 lines)
    - Finance API manager with smart fallback
 
@@ -80,10 +80,10 @@ Visit: `https://your-app.com/finance`
 
 ✅ lib/finance-hooks.ts (186 lines)
    - React hooks for data management
-```
+\`\`\`
 
 #### Frontend (3 files)
-```
+\`\`\`
 ✅ components/data-upload.tsx (191 lines)
    - Drag-drop file upload interface
 
@@ -92,30 +92,30 @@ Visit: `https://your-app.com/finance`
 
 ✅ app/finance/page.tsx (270 lines)
    - Main feature page
-```
+\`\`\`
 
 #### Database (1 file)
-```
+\`\`\`
 ✅ scripts/007_create_financial_analysis.sql
    - 4 tables with RLS security
    - Already executed ✓
-```
+\`\`\`
 
 #### Documentation (6 files)
-```
+\`\`\`
 ✅ FINANCE_SETUP_INSTRUCTIONS.md (329 lines)
 ✅ FINANCE_FEATURE_DOCUMENTATION.md (289 lines)
 ✅ FINANCE_FEATURE_SUMMARY.md (358 lines)
 ✅ FINANCE_QUICK_REFERENCE.md (284 lines)
 ✅ LAUNCH_CHECKLIST.md (317 lines)
 ✅ ARCHITECTURE_DIAGRAMS.md (358 lines)
-```
+\`\`\`
 
 #### Other (1 file)
-```
+\`\`\`
 ✅ Updated app/page.tsx
    - Added Finance link to navigation
-```
+\`\`\`
 
 ---
 
@@ -179,7 +179,7 @@ Visit: `https://your-app.com/finance`
 
 ## 🏗️ System Architecture
 
-```
+\`\`\`
 User Input (File/Text)
     ↓
 Document Parser (CSV/JSON/Text)
@@ -191,7 +191,7 @@ AI Analysis (Summary/Metrics/Insights/Q&A)
 Database Storage (with RLS)
     ↓
 Results Display (with Confidence Score)
-```
+\`\`\`
 
 ---
 
@@ -237,7 +237,7 @@ All tables include:
 
 ## 🚀 Usage Example
 
-```typescript
+\`\`\`typescript
 // In your component
 const response = await fetch('/api/finance/analyze', {
   method: 'POST',
@@ -250,7 +250,7 @@ const response = await fetch('/api/finance/analyze', {
 
 const data = await response.json();
 // Response: { success: true, analysis: {...}, confidence: 0.85 }
-```
+\`\`\`
 
 ---
 
@@ -273,12 +273,12 @@ const data = await response.json();
 
 1. Go to `/finance`
 2. Paste this:
-```csv
+\`\`\`csv
 Date,Revenue,Profit
 Q1,1000000,150000
 Q2,1100000,180000
 Q3,1250000,220000
-```
+\`\`\`
 3. Click "Analyze Document"
 4. Try each analysis type
 5. Ask a question in Q&A mode

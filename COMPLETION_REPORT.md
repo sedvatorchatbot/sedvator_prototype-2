@@ -122,11 +122,11 @@ I have successfully implemented a **production-ready Data & Finance Analysis fea
 Go to Vercel Dashboard → Settings → Environment Variables
 
 Add:
-```
+\`\`\`
 FINNHUB_API_KEY=your_key_here
 TWELVE_DATA_API_KEY=your_key_here (optional)
 ALPHA_VANTAGE_API_KEY=your_key_here (optional)
-```
+\`\`\`
 
 ### Step 2: Database Ready
 ✅ Migration already executed successfully

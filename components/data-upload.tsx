@@ -45,8 +45,9 @@ export function DataUpload({ onUpload, isLoading = false }: DataUploadProps) {
 
     setFileName(file.name)
 
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
+    // Validate file size
+    const maxSize = file.type === 'application/pdf' ? 50 * 1024 * 1024 : 10 * 1024 * 1024
+    if (file.size > maxSize) {
       setUploadStatus('error')
       setTimeout(() => setUploadStatus('idle'), 3000)
       return
@@ -60,13 +61,46 @@ export function DataUpload({ onUpload, isLoading = false }: DataUploadProps) {
       type = 'json'
     } else if (file.type === 'application/pdf') {
       type = 'pdf'
-      alert('PDF files require server-side processing. Please paste text content instead.')
-      return
     }
 
     setFileType(type)
 
-    // Read file
+    // For PDFs and other files, use server-side processing
+    if (type === 'pdf' || type === 'csv' || type === 'json') {
+      try {
+        console.log('[v0] Uploading file to server for processing')
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const response = await fetch('/api/finance/upload', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          console.error('[v0] Upload error:', error)
+          setUploadStatus('error')
+          setTimeout(() => setUploadStatus('idle'), 3000)
+          return
+        }
+
+        const result = await response.json()
+        console.log('[v0] File uploaded successfully')
+
+        setContent(result.document.content)
+        setUploadStatus('success')
+        setTimeout(() => setUploadStatus('idle'), 2000)
+        onUpload(result.document.content, type, file.name)
+      } catch (error) {
+        console.error('[v0] Upload error:', error)
+        setUploadStatus('error')
+        setTimeout(() => setUploadStatus('idle'), 3000)
+      }
+      return
+    }
+
+    // For plain text, read client-side
     const reader = new FileReader()
     reader.onload = (e) => {
       const text = e.target?.result as string
@@ -116,7 +150,9 @@ export function DataUpload({ onUpload, isLoading = false }: DataUploadProps) {
       >
         <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
         <h3 className="font-semibold text-foreground mb-1">Upload Financial Document</h3>
-        <p className="text-sm text-muted-foreground mb-4">Drag & drop CSV, JSON, or text files (max 10MB)</p>
+        <p className="text-sm text-muted-foreground mb-4">
+          Drag & drop CSV, JSON, PDF, or text files (max 50MB for PDFs, 10MB for others)
+        </p>
 
         <input
           ref={fileInputRef}
@@ -135,13 +171,13 @@ export function DataUpload({ onUpload, isLoading = false }: DataUploadProps) {
         {uploadStatus === 'success' && (
           <div className="mt-3 text-sm text-green-600 flex items-center justify-center gap-2">
             <CheckCircle className="w-4 h-4" />
-            File uploaded successfully
+            File uploaded and processed successfully
           </div>
         )}
         {uploadStatus === 'error' && (
           <div className="mt-3 text-sm text-red-600 flex items-center justify-center gap-2">
             <AlertCircle className="w-4 h-4" />
-            File too large or invalid format
+            File too large or upload failed
           </div>
         )}
       </Card>

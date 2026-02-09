@@ -12,19 +12,19 @@ The Finance feature now supports enterprise-grade document processing with:
 
 ### 1. Add Required Dependencies
 
-```bash
+\`\`\`bash
 npm install pdf-parse tesseract.js
 # or
 yarn add pdf-parse tesseract.js
-```
+\`\`\`
 
 ### 2. Package Versions (Tested & Verified)
-```json
+\`\`\`json
 {
   "pdf-parse": "^1.1.1",
   "tesseract.js": "^5.0.0"
 }
-```
+\`\`\`
 
 ---
 
@@ -32,7 +32,7 @@ yarn add pdf-parse tesseract.js
 
 ### PDF Processing Flow
 
-```
+\`\`\`
 File Upload
     ↓
 Detect file type (application/pdf)
@@ -46,7 +46,7 @@ Fallback to Tesseract OCR
 SUCCESS? → Return OCR text + confidence
     ↓ NO
 Return error with diagnostics
-```
+\`\`\`
 
 ### Document Type Support
 
@@ -64,7 +64,7 @@ Return error with diagnostics
 
 ### Extract PDF with Automatic Fallback
 
-```typescript
+\`\`\`typescript
 import { extractPDFText, processDocumentFile } from '@/lib/document-processor'
 
 // Method 1: Direct PDF extraction
@@ -74,11 +74,11 @@ const result = await extractPDFText(pdfBuffer)
 console.log('Extraction method:', result.extractionMethod) // 'text' or 'ocr'
 console.log('Pages extracted:', result.pageCount)
 console.log('Text:', result.text.substring(0, 100))
-```
+\`\`\`
 
 ### Process Any File Type
 
-```typescript
+\`\`\`typescript
 // Method 2: Automatic format detection
 const result = await processDocumentFile(
   pdfBuffer,
@@ -91,7 +91,7 @@ console.log('Extraction method:', result.extractionMethod)
 if (result.confidence) {
   console.log('OCR confidence:', result.confidence)
 }
-```
+\`\`\`
 
 ---
 
@@ -99,7 +99,7 @@ if (result.confidence) {
 
 ### Chunk Processing (Large Files)
 
-```typescript
+\`\`\`typescript
 import { chunkContent } from '@/lib/document-processor'
 
 const chunks = chunkContent(extractedText, {
@@ -112,12 +112,12 @@ for (const chunk of chunks) {
   // Send to AI for analysis
   const analysis = await analyzeChunk(chunk.content)
 }
-```
+\`\`\`
 
 ### Memory Optimization
 
 For large PDFs (>100MB):
-```typescript
+\`\`\`typescript
 // Process in streams, not entire buffer
 const stream = fs.createReadStream('large-file.pdf')
 const chunks = []
@@ -130,7 +130,7 @@ stream.on('end', async () => {
   const buffer = Buffer.concat(chunks)
   const result = await extractPDFText(buffer)
 })
-```
+\`\`\`
 
 ---
 
@@ -163,7 +163,7 @@ stream.on('end', async () => {
 
 ### Common Issues & Solutions
 
-```typescript
+\`\`\`typescript
 try {
   const result = await extractPDFText(buffer)
 } catch (error) {
@@ -178,11 +178,11 @@ try {
     console.log('Unable to extract text from document')
   }
 }
-```
+\`\`\`
 
 ### Diagnostics
 
-```typescript
+\`\`\`typescript
 const { text, extractionMethod, confidence, pageCount } = await extractPDFText(buffer)
 
 console.log({
@@ -192,14 +192,14 @@ console.log({
   textLength: text.length,
   hasContent: text.trim().length > 100,
 })
-```
+\`\`\`
 
 ---
 
 ## API Response Examples
 
 ### Successful PDF Extraction (native)
-```json
+\`\`\`json
 {
   "type": "pdf",
   "content": "Financial Report 2024...",
@@ -207,10 +207,10 @@ console.log({
   "pageCount": 45,
   "confidence": null
 }
-```
+\`\`\`
 
 ### Successful OCR (scanned PDF)
-```json
+\`\`\`json
 {
   "type": "pdf",
   "content": "ANNUAL REPORT 2024...",
@@ -218,10 +218,10 @@ console.log({
   "pageCount": 1,
   "confidence": 94.2
 }
-```
+\`\`\`
 
 ### CSV/JSON Processing
-```json
+\`\`\`json
 {
   "type": "csv",
   "content": "revenue,profit,year\n1000000,250000,2024",
@@ -230,14 +230,14 @@ console.log({
     { "revenue": "1000000", "profit": "250000", "year": "2024" }
   ]
 }
-```
+\`\`\`
 
 ---
 
 ## Advanced Features
 
 ### Extract Financial Metrics
-```typescript
+\`\`\`typescript
 import { extractFinancialMetrics } from '@/lib/document-processor'
 
 const metrics = extractFinancialMetrics(extractedText)
@@ -249,18 +249,18 @@ console.log(metrics)
 //   eps: "$5.23",
 //   operating_margin: "25%"
 // }
-```
+\`\`\`
 
 ### Generate Document Summary
-```typescript
+\`\`\`typescript
 import { generateDocumentSummary } from '@/lib/document-processor'
 
 const summary = generateDocumentSummary(extractedText, 5)
 // Returns 5 most relevant sentences
-```
+\`\`\`
 
 ### Identify Data Structures
-```typescript
+\`\`\`typescript
 import { identifyDataStructures } from '@/lib/document-processor'
 
 const structures = identifyDataStructures(extractedText)
@@ -270,7 +270,7 @@ console.log(structures)
 //   estimatedTables: 3,
 //   estimatedRecords: 245
 // }
-```
+\`\`\`
 
 ---
 
@@ -282,17 +282,17 @@ console.log(structures)
 - **Never force OCR**: Let the system decide
 
 ### 2. Handle Large Files
-```typescript
+\`\`\`typescript
 // ✅ DO: Process in chunks
 const chunks = chunkContent(text, 1500, 200)
 await Promise.all(chunks.map(chunk => analyzeChunk(chunk)))
 
 // ❌ DON'T: Send entire document
 await analyzeChunk(text)
-```
+\`\`\`
 
 ### 3. Cache Results
-```typescript
+\`\`\`typescript
 // ✅ Store extracted text
 await supabase
   .from('financial_documents')
@@ -301,15 +301,15 @@ await supabase
 
 // Reuse without re-extracting
 const stored = await getStoredDocument(docId)
-```
+\`\`\`
 
 ### 4. Monitor Confidence
-```typescript
+\`\`\`typescript
 if (result.extractionMethod === 'ocr' && result.confidence < 85) {
   // Flag for manual review
   console.warn('Low OCR confidence, manual review recommended')
 }
-```
+\`\`\`
 
 ---
 
@@ -356,13 +356,13 @@ if (result.extractionMethod === 'ocr' && result.confidence < 85) {
 
 ## Version Compatibility
 
-```
+\`\`\`
 Node.js:          16.0.0+
 pdf-parse:        1.1.1+
 tesseract.js:     5.0.0+
 Next.js:          13.0.0+
 TypeScript:       4.8.0+
-```
+\`\`\`
 
 ---
 

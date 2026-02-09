@@ -4,9 +4,9 @@
 
 ### 1. Database Migration ✅ (Already Done)
 The database migration has been executed successfully:
-```bash
+\`\`\`bash
 scripts/007_create_financial_analysis.sql
-```
+\`\`\`
 
 **Created Tables:**
 - `financial_documents` - Store uploaded documents
@@ -26,20 +26,20 @@ Add these to your Vercel project environment variables (Settings → Environment
 #### **Option A: Using All Three Providers (Recommended)**
 For maximum reliability with automatic fallback:
 
-```
+\`\`\`
 FINNHUB_API_KEY=your_finnhub_api_key
 TWELVE_DATA_API_KEY=your_twelve_data_api_key
 ALPHA_VANTAGE_API_KEY=your_alpha_vantage_api_key
-```
+\`\`\`
 
 #### **Option B: Using Only Finnhub (Minimal)**
 If you only want to use one provider:
 
-```
+\`\`\`
 FINNHUB_API_KEY=your_finnhub_api_key
 TWELVE_DATA_API_KEY=
 ALPHA_VANTAGE_API_KEY=
-```
+\`\`\`
 
 ### How to Get API Keys
 
@@ -71,12 +71,12 @@ ALPHA_VANTAGE_API_KEY=
 After setup, verify everything is working:
 
 ### ✓ Database Tables
-```sql
+\`\`\`sql
 -- Check if tables exist
 SELECT table_name FROM information_schema.tables 
 WHERE table_schema = 'public' 
 AND table_name LIKE 'financial_%';
-```
+\`\`\`
 
 Should return:
 - `financial_documents`
@@ -103,16 +103,16 @@ Check Vercel dashboard:
 ### Test with Sample Data
 
 **Sample CSV:**
-```csv
+\`\`\`csv
 Date,Revenue,Profit,Growth
 Q1-2023,1000000,150000,5%
 Q2-2023,1100000,180000,10%
 Q3-2023,1250000,220000,12%
 Q4-2023,1500000,280000,15%
-```
+\`\`\`
 
 **Sample JSON:**
-```json
+\`\`\`json
 {
   "company": "TechCorp",
   "revenue": "$2.5B",
@@ -120,7 +120,7 @@ Q4-2023,1500000,280000,15%
   "growth_rate": "25% YoY",
   "key_products": ["SaaS", "Analytics", "AI"]
 }
-```
+\`\`\`
 
 **Test Steps:**
 1. Copy sample data above
@@ -137,10 +137,10 @@ Q4-2023,1500000,280000,15%
 ### Problem: "Analysis failed" error
 
 **Solution:** Check that at least one API key is configured:
-```bash
+\`\`\`bash
 # Verify in Vercel terminal
 env | grep -i api_key
-```
+\`\`\`
 
 ### Problem: Market data returning 429 (Too Many Requests)
 
@@ -172,9 +172,9 @@ To reduce API calls:
 ## 6. Feature Access
 
 ### User-Facing URL
-```
+\`\`\`
 https://your-domain.com/finance
-```
+\`\`\`
 
 ### Navigation Links
 - Homepage: New "Finance" button in navbar
@@ -204,27 +204,27 @@ https://your-domain.com/finance
 ### Adjust Rate Limits
 
 In `lib/finance-api.ts`, modify:
-```typescript
+\`\`\`typescript
 private requestLimits: Record<string, number> = {
   finnhub: 60,        // requests per minute
   twelve_data: 800,   // requests per day
   alpha_vantage: 500, // requests per day
 }
-```
+\`\`\`
 
 ### Change Cache Duration
 
 In `app/api/finance/market-data/route.ts`:
-```typescript
+\`\`\`typescript
 // Currently set to 24 hours
 const expiresAt = new Date()
 expiresAt.setHours(expiresAt.getHours() + 24)  // Change this
-```
+\`\`\`
 
 ### Customize Analysis
 
 In `app/api/finance/analyze/route.ts`:
-```typescript
+\`\`\`typescript
 // Modify analysis logic in the switch statement
 switch (analysisType) {
   case 'summary':
@@ -232,7 +232,7 @@ switch (analysisType) {
     break;
   // ... etc
 }
-```
+\`\`\`
 
 ---
 
@@ -261,7 +261,7 @@ Already included in migration:
 ## 9. Monitoring & Logging
 
 ### View API Usage
-```sql
+\`\`\`sql
 SELECT 
   DATE(created_at),
   api_name,
@@ -270,10 +270,10 @@ SELECT
 FROM api_usage_logs
 GROUP BY DATE(created_at), api_name
 ORDER BY created_at DESC;
-```
+\`\`\`
 
 ### Check Cache Effectiveness
-```sql
+\`\`\`sql
 SELECT 
   ticker,
   data_type,
@@ -283,10 +283,10 @@ FROM market_data_cache
 WHERE expires_at > NOW()
 GROUP BY ticker, data_type
 ORDER BY cache_hits DESC;
-```
+\`\`\`
 
 ### Monitor User Activity
-```sql
+\`\`\`sql
 SELECT 
   user_id,
   COUNT(*) as total_analyses,
@@ -295,7 +295,7 @@ SELECT
 FROM financial_analyses
 GROUP BY user_id
 ORDER BY total_analyses DESC;
-```
+\`\`\`
 
 ---
 

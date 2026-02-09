@@ -133,7 +133,7 @@ A production-ready **Data & Finance Analysis** module for Sedvator AI that enabl
 - **APIs**: Multiple finance providers with abstraction layer
 
 ### Data Flow
-```
+\`\`\`
 User Input (upload/paste) 
     ↓
 Document Parser (text/CSV/JSON extraction)
@@ -145,7 +145,7 @@ AI Analysis (summary generation, insight extraction)
 Database Storage (with RLS)
     ↓
 Results Display (with confidence scoring)
-```
+\`\`\`
 
 ### Performance Metrics
 - **File Processing**: <1s for typical documents
@@ -171,7 +171,7 @@ Results Display (with confidence scoring)
 4. Use API routes for analysis
 
 ### API Usage Example
-```typescript
+\`\`\`typescript
 // Analyze document
 const response = await fetch('/api/finance/analyze', {
   method: 'POST',
@@ -182,7 +182,7 @@ const response = await fetch('/api/finance/analyze', {
   })
 });
 const data = await response.json();
-```
+\`\`\`
 
 ---
 
@@ -276,7 +276,7 @@ const data = await response.json();
 
 ## 📝 Environment Setup
 
-```bash
+\`\`\`bash
 # Required API Keys (add to Vercel project environment variables)
 FINNHUB_API_KEY=your_key_here
 TWELVE_DATA_API_KEY=your_key_here
@@ -285,12 +285,12 @@ ALPHA_VANTAGE_API_KEY=your_key_here
 # Already configured (Supabase)
 SUPABASE_URL=...
 SUPABASE_ANON_KEY=...
-```
+\`\`\`
 
 ---
 
 ## 📚 File Structure
-```
+\`\`\`
 Sedvator-AI/
 ├── app/
 │   ├── api/finance/
@@ -311,7 +311,7 @@ Sedvator-AI/
 ├── scripts/
 │   └── 007_create_financial_analysis.sql
 └── FINANCE_FEATURE_DOCUMENTATION.md
-```
+\`\`\`
 
 ---
 

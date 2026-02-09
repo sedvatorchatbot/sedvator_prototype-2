@@ -1,12 +1,14 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import { DataUpload } from '@/components/data-upload'
 import { AnalysisResults } from '@/components/analysis-results'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { TrendingUp, BarChart3, MessageSquare, Zap } from 'lucide-react'
+import { TrendingUp, BarChart3, MessageSquare, Zap, ArrowLeft, Home } from 'lucide-react'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 interface Analysis {
   type: 'summary' | 'metrics' | 'insights' | 'qa'
@@ -105,14 +107,40 @@ export default function FinanceAnalysisPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border sticky top-0 bg-background/80 backdrop-blur-sm z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3 mb-2">
-            <TrendingUp className="w-6 h-6 text-cyan-500" />
-            <h1 className="text-2xl font-bold text-foreground">Data & Finance Analysis</h1>
+      {/* Top Navigation */}
+      <nav className="border-b border-border sticky top-0 bg-background/80 backdrop-blur-sm z-10">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+            </Link>
+            <span className="text-sm text-muted-foreground">|</span>
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <Home className="w-4 h-4 mr-2" />
+                Home
+              </Button>
+            </Link>
           </div>
-          <p className="text-sm text-muted-foreground">Upload financial documents, datasets, or market data for AI-powered analysis</p>
+          <ThemeToggle />
+        </div>
+      </nav>
+
+      {/* Header */}
+      <div className="border-b border-border bg-gradient-to-r from-background to-cyan-500/5">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-cyan-500/10 rounded-lg">
+              <TrendingUp className="w-6 h-6 text-cyan-500" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Data & Finance Analysis</h1>
+              <p className="text-sm text-muted-foreground mt-1">Upload financial documents, datasets, or market data for AI-powered analysis</p>
+            </div>
+          </div>
         </div>
       </div>
 

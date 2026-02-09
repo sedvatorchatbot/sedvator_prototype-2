@@ -4,11 +4,11 @@
 
 ### 1. Set Environment Variables
 Add to Vercel project settings:
-```
+\`\`\`
 FINNHUB_API_KEY=xxx
 TWELVE_DATA_API_KEY=xxx (optional)
 ALPHA_VANTAGE_API_KEY=xxx (optional)
-```
+\`\`\`
 
 ### 2. Access Feature
 Go to: `https://your-app.com/finance`
@@ -61,7 +61,7 @@ Go to: `https://your-app.com/finance`
 ## 🔌 API Endpoints
 
 ### Analyze Document
-```bash
+\`\`\`bash
 POST /api/finance/analyze
 Content-Type: application/json
 
@@ -70,20 +70,20 @@ Content-Type: application/json
   "rawContent": "Your document text",
   "query": "Optional question for QA mode"
 }
-```
+\`\`\`
 
 **Response:**
-```json
+\`\`\`json
 {
   "success": true,
   "analysis": { ... },
   "confidence": 0.85,
   "timestamp": "2026-02-09T..."
 }
-```
+\`\`\`
 
 ### Get Market Data
-```bash
+\`\`\`bash
 POST /api/finance/market-data
 Content-Type: application/json
 
@@ -92,7 +92,7 @@ Content-Type: application/json
   "dataType": "price|company_info|news",
   "useCache": true
 }
-```
+\`\`\`
 
 ---
 
@@ -120,7 +120,7 @@ Content-Type: application/json
 
 ## 📊 Database Tables
 
-```sql
+\`\`\`sql
 -- Documents uploaded by users
 financial_documents
 ├── id (UUID)
@@ -154,28 +154,28 @@ api_usage_logs
 ├── endpoint (TEXT)
 ├── status_code (INTEGER)
 └── created_at (TIMESTAMP)
-```
+\`\`\`
 
 ---
 
 ## 🎨 UI Components
 
 ### DataUpload Component
-```tsx
+\`\`\`tsx
 <DataUpload 
   onUpload={(content, fileType, fileName) => {}}
   isLoading={false}
 />
-```
+\`\`\`
 
 ### AnalysisResults Component
-```tsx
+\`\`\`tsx
 <AnalysisResults
   results={analysisData}
   analysisType="summary"
   confidence={0.85}
 />
-```
+\`\`\`
 
 ---
 
@@ -216,21 +216,21 @@ api_usage_logs
 ## 🧪 Test Data
 
 ### Sample CSV
-```
+\`\`\`
 Date,Revenue,Profit
 Q1,1000000,150000
 Q2,1100000,180000
 Q3,1250000,220000
-```
+\`\`\`
 
 ### Sample JSON
-```json
+\`\`\`json
 {
   "revenue": "$5M",
   "growth": "25% YoY",
   "margin": "18%"
 }
-```
+\`\`\`
 
 ---
 

@@ -28,11 +28,14 @@ import {
   Menu,
   X,
   MoreVertical,
+  TrendingUp,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { encryptMessage, decryptMessage } from "@/lib/encryption"
+import { DataUpload } from "@/components/data-upload" // Import DataUpload component
+import { AnalysisResults } from "@/components/analysis-results" // Import AnalysisResults component
 
 interface Profile {
   id: string
@@ -73,6 +76,10 @@ export function ChatInterface({
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [isUploadingFiles, setIsUploadingFiles] = useState(false)
+  const [financeMode, setFinanceMode] = useState(false) // Declare financeMode variable
+  const [financialData, setFinancialData] = useState("") // Declare financialData variable
+  const [analysisResults, setAnalysisResults] = useState(null) // Declare analysisResults variable
+  const [isAnalyzing, setIsAnalyzing] = useState(false) // Declare isAnalyzing variable
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
@@ -739,67 +746,87 @@ export function ChatInterface({
         <div ref={messagesEndRef} />
       </div>
 
-        {/* Input Area */}
-        <div className="border-t border-border bg-card/50 px-3 sm:px-6 py-3 sm:py-4">
-          <div className="max-w-4xl mx-auto flex gap-2 sm:gap-3 items-end">
-            <Input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage()}
-              placeholder={isListening ? "🎤 Listening..." : "Type or click mic..."}
-              disabled={isLoading}
-              className="flex-1 resize-none text-sm"
-            />
-            <Button
-              onClick={() => startListening()}
-              disabled={isLoading}
-              size="sm"
-              variant={isListening ? "default" : "outline"}
-              className="flex-shrink-0"
-            >
-              {isListening ? <MicOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Mic className="h-4 w-4 sm:h-5 sm:w-5" />}
-            </Button>
+      {/* Input Area */}
+      <div className="border-t border-border bg-card/50 px-3 sm:px-6 py-3 sm:py-4">
+        <div className="max-w-4xl mx-auto flex gap-2 sm:gap-3 items-end">
+          <Input
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage()}
+            placeholder={isListening ? "🎤 Listening..." : "Type or click mic..."}
+            disabled={isLoading}
+            className="flex-1 resize-none text-sm"
+          />
+          <Button
+            onClick={() => startListening()}
+            disabled={isLoading}
+            size="sm"
+            variant={isListening ? "default" : "outline"}
+            className="flex-shrink-0"
+          >
+            {isListening ? <MicOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Mic className="h-4 w-4 sm:h-5 sm:w-5" />}
+          </Button>
 
-            {/* Voice Reply Toggle */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={() => {
-                      if (isSpeaking) {
-                        stopSpeaking()
-                      } else {
-                        toggleVoiceReply()
-                      }
-                    }}
-                    variant="ghost"
-                    size="sm"
-                    className={
-                      voiceReplyEnabled
-                        ? "text-cyan-400 hover:text-cyan-300"
-                        : "text-muted-foreground hover:text-foreground"
+            {/* Finance Button */}
+            <Link href="/finance">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:text-foreground flex-shrink-0"
+                    >
+                      <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Finance Analysis
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </Link>
+
+            {/* Send Button */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => {
+                    if (isSpeaking) {
+                      stopSpeaking()
+                    } else {
+                      toggleVoiceReply()
                     }
-                  >
-                    {voiceReplyEnabled ? <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {isSpeaking ? "Click to stop speaking" : voiceReplyEnabled ? "Voice replies ON" : "Voice replies OFF"}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  className={
+                    voiceReplyEnabled
+                      ? "text-cyan-400 hover:text-cyan-300"
+                      : "text-muted-foreground hover:text-foreground"
+                  }
+                >
+                  {voiceReplyEnabled ? <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isSpeaking ? "Click to stop speaking" : voiceReplyEnabled ? "Voice replies ON" : "Voice replies OFF"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-            <Button
-              onClick={handleSendMessage}
-              disabled={isLoading || !input.trim()}
-              size="sm"
-              className="flex-shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
-            >
-              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
-          </div>
+          <Button
+            onClick={handleSendMessage}
+            disabled={isLoading || !input.trim()}
+            size="sm"
+            className="flex-shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
+          >
+            <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+          </Button>
         </div>
+      </div>
 
       {/* Clear History Confirmation Modal */}
       {showClearConfirm && (

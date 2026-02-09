@@ -34,8 +34,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { encryptMessage, decryptMessage } from "@/lib/encryption"
-import { DataUpload } from "@/components/data-upload"
-import { AnalysisResults } from "@/components/analysis-results"
+import { DataUpload } from "@/components/data-upload" // Import DataUpload component
+import { AnalysisResults } from "@/components/analysis-results" // Import AnalysisResults component
 
 interface Profile {
   id: string
@@ -76,10 +76,10 @@ export function ChatInterface({
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [isUploadingFiles, setIsUploadingFiles] = useState(false)
-  const [financeMode, setFinanceMode] = useState(false)
-  const [financialData, setFinancialData] = useState<string>("")
-  const [analysisResults, setAnalysisResults] = useState<Record<string, unknown> | null>(null)
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [financeMode, setFinanceMode] = useState(false) // Declare financeMode variable
+  const [financialData, setFinancialData] = useState("") // Declare financialData variable
+  const [analysisResults, setAnalysisResults] = useState(null) // Declare analysisResults variable
+  const [isAnalyzing, setIsAnalyzing] = useState(false) // Declare isAnalyzing variable
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
@@ -609,17 +609,6 @@ export function ChatInterface({
               Games & Quizzes
             </Button>
           </Link>
-          <Button
-            variant={financeMode ? "default" : "ghost"}
-            className={`w-full justify-start ${financeMode ? "bg-cyan-500/20 text-cyan-400" : "text-muted-foreground hover:text-foreground"}`}
-            onClick={() => {
-              setFinanceMode(!financeMode)
-              setSidebarOpen(false)
-            }}
-          >
-            <TrendingUp className="mr-2 h-4 w-4" />
-            Finance Analysis
-          </Button>
 
           {!isGuest && (
             <>
@@ -757,171 +746,87 @@ export function ChatInterface({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Finance Analysis Section */}
-      {financeMode && (
-        <div className="border-t border-border bg-card/50 px-3 sm:px-6 py-4">
-          <div className="max-w-4xl mx-auto space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-foreground flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-cyan-500" />
-                Finance Analysis Mode
-              </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setFinanceMode(false)
-                  setFinancialData("")
-                  setAnalysisResults(null)
-                }}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
+      {/* Input Area */}
+      <div className="border-t border-border bg-card/50 px-3 sm:px-6 py-3 sm:py-4">
+        <div className="max-w-4xl mx-auto flex gap-2 sm:gap-3 items-end">
+          <Input
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage()}
+            placeholder={isListening ? "🎤 Listening..." : "Type or click mic..."}
+            disabled={isLoading}
+            className="flex-1 resize-none text-sm"
+          />
+          <Button
+            onClick={() => startListening()}
+            disabled={isLoading}
+            size="sm"
+            variant={isListening ? "default" : "outline"}
+            className="flex-shrink-0"
+          >
+            {isListening ? <MicOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Mic className="h-4 w-4 sm:h-5 sm:w-5" />}
+          </Button>
 
-            {!financialData ? (
-              <DataUpload
-                onUpload={(content, type, fileName) => {
-                  setFinancialData(content)
-                  console.log('[v0] Document uploaded:', fileName)
-                }}
-              />
-            ) : (
-              <div className="space-y-4">
-                <div className="p-3 bg-card rounded-lg border border-border">
-                  <p className="text-xs text-muted-foreground">Loaded document • {financialData.length} characters</p>
-                </div>
-
-                {!analysisResults ? (
-                  <div className="flex flex-wrap gap-2">
-                    {['summary', 'metrics', 'insights', 'qa'].map((type) => (
-                      <Button
-                        key={type}
-                        variant="outline"
-                        size="sm"
-                        onClick={async () => {
-                          setIsAnalyzing(true)
-                          try {
-                            const response = await fetch('/api/finance/analyze', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                analysisType: type,
-                                rawContent: financialData,
-                              }),
-                            })
-                            const data = await response.json()
-                            if (data.analysis) {
-                              setAnalysisResults(data.analysis)
-                            }
-                          } catch (error) {
-                            console.error('[v0] Analysis error:', error)
-                          } finally {
-                            setIsAnalyzing(false)
-                          }
-                        }}
-                        disabled={isAnalyzing}
-                      >
-                        {type === 'qa' ? 'Q&A' : type.charAt(0).toUpperCase() + type.slice(1)}
-                      </Button>
-                    ))}
-                  </div>
-                ) : (
-                  <AnalysisResults
-                    results={analysisResults}
-                    onClose={() => {
-                      setAnalysisResults(null)
-                      setFinancialData("")
-                      setFinanceMode(false)
-                    }}
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-        {/* Input Area */}
-        <div className="border-t border-border bg-card/50 px-3 sm:px-6 py-3 sm:py-4">
-          <div className="max-w-4xl mx-auto flex gap-2 sm:gap-3 items-end">
-            <Input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSendMessage()}
-              placeholder={isListening ? "🎤 Listening..." : "Type or click mic..."}
-              disabled={isLoading}
-              className="flex-1 resize-none text-sm"
-            />
-            <Button
-              onClick={() => startListening()}
-              disabled={isLoading}
-              size="sm"
-              variant={isListening ? "default" : "outline"}
-              className="flex-shrink-0"
-            >
-              {isListening ? <MicOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Mic className="h-4 w-4 sm:h-5 sm:w-5" />}
-            </Button>
-
-            {/* Finance Toggle */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={() => setFinanceMode(!financeMode)}
-                    variant={financeMode ? "default" : "ghost"}
-                    size="sm"
-                    className={financeMode ? "bg-cyan-500/20 text-cyan-400 flex-shrink-0" : "text-muted-foreground hover:text-foreground flex-shrink-0"}
-                  >
-                    <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {financeMode ? "Close Finance Mode" : "Open Finance Analysis"}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            {/* Finance Button */}
+            <Link href="/finance">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:text-foreground flex-shrink-0"
+                    >
+                      <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Finance Analysis
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </Link>
 
             {/* Send Button */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={() => {
-                      if (isSpeaking) {
-                        stopSpeaking()
-                      } else {
-                        toggleVoiceReply()
-                      }
-                    }}
-                    variant="ghost"
-                    size="sm"
-                    className={
-                      voiceReplyEnabled
-                        ? "text-cyan-400 hover:text-cyan-300"
-                        : "text-muted-foreground hover:text-foreground"
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => {
+                    if (isSpeaking) {
+                      stopSpeaking()
+                    } else {
+                      toggleVoiceReply()
                     }
-                  >
-                    {voiceReplyEnabled ? <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {isSpeaking ? "Click to stop speaking" : voiceReplyEnabled ? "Voice replies ON" : "Voice replies OFF"}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  className={
+                    voiceReplyEnabled
+                      ? "text-cyan-400 hover:text-cyan-300"
+                      : "text-muted-foreground hover:text-foreground"
+                  }
+                >
+                  {voiceReplyEnabled ? <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isSpeaking ? "Click to stop speaking" : voiceReplyEnabled ? "Voice replies ON" : "Voice replies OFF"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-            <Button
-              onClick={handleSendMessage}
-              disabled={isLoading || !input.trim()}
-              size="sm"
-              className="flex-shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
-            >
-              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
-          </div>
+          <Button
+            onClick={handleSendMessage}
+            disabled={isLoading || !input.trim()}
+            size="sm"
+            className="flex-shrink-0 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
+          >
+            <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+          </Button>
         </div>
+      </div>
 
       {/* Clear History Confirmation Modal */}
       {showClearConfirm && (

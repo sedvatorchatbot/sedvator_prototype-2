@@ -1,7 +1,7 @@
 /**
  * Document Processing Utilities
- * Handles PDF text extraction (pdf-parse), OCR (Tesseract), CSV, JSON, and text parsing
- * Supports: PDF, scanned PDFs with OCR, CSV, JSON, plain text
+ * Handles PDF text extraction, CSV, JSON, and text parsing
+ * Note: For PDFs, we extract text that's already embedded. For scanned PDFs, users should paste text.
  */
 
 interface DocumentChunk {
@@ -11,90 +11,74 @@ interface DocumentChunk {
 }
 
 interface ParsedData {
-  type: 'text' | 'csv' | 'json' | 'pdf' | 'ocr'
+  type: 'text' | 'csv' | 'json' | 'pdf'
   content: string
   records?: Record<string, unknown>[]
   tables?: string[][]
   summary?: string
-  extractionMethod?: 'text' | 'ocr' | 'native' // How it was extracted
-  confidence?: number // For OCR confidence score
+  extractionMethod?: 'text' | 'native'
   pageCount?: number
 }
 
 /**
- * Extract text from PDF buffer using pdf-parse
- * Falls back to OCR if text extraction fails (scanned PDFs)
+ * Extract text from PDF buffer using pure JavaScript
+ * Works for PDFs with embedded text. For scanned PDFs, users should paste text.
  */
 export async function extractPDFText(buffer: Buffer): Promise<{
   text: string
   pageCount: number
-  extractionMethod: 'text' | 'ocr'
-  confidence?: number
+  extractionMethod: 'text'
 }> {
-  console.log('[v0] Extracting text from PDF buffer')
+  console.log('[v0] Extracting text from PDF')
 
   try {
-    // Dynamic import for pdf-parse
-    const pdfParse = require('pdf-parse')
+    // Convert buffer to string to search for text content
+    const pdfString = buffer.toString('latin1')
 
-    const data = await pdfParse(buffer)
-    const text = data.text || ''
+    // Simple text extraction from PDF streams
+    // PDFs contain text in various forms - we'll extract visible text
+    let text = ''
 
-    console.log('[v0] PDF extraction successful, pages:', data.numpages)
+    // Find text in BT...ET blocks (text blocks in PDF)
+    const textPattern = /BT\s+(.*?)\s+ET/gs
+    let match
+    while ((match = textPattern.exec(pdfString)) !== null) {
+      const content = match[1]
+      // Extract text from Tj and TJ operators
+      const textMatches = content.match(/\((.*?)\)/g)
+      if (textMatches) {
+        textMatches.forEach((textMatch) => {
+          let extracted = textMatch.slice(1, -1) // Remove parentheses
+          // Decode common PDF escapes
+          extracted = extracted.replace(/\\n/g, '\n').replace(/\\\(/g, '(').replace(/\\\)/g, ')')
+          text += extracted + ' '
+        })
+      }
+    }
+
+    // If no text found in streams, try to extract from object streams
+    if (!text.trim()) {
+      // Look for common text patterns in PDF
+      const commonPatterns = /[A-Za-z0-9\s\.\,\!\?\:\;\-]{20,}/g
+      const matches = pdfString.match(commonPatterns)
+      if (matches) {
+        text = matches.join('\n')
+      }
+    }
+
+    // Count approximate pages (rough estimate based on Page objects)
+    const pageCount = (pdfString.match(/\/Type\s*\/Page[^s]/g) || []).length || 1
+
+    console.log('[v0] PDF extraction successful, pages:', pageCount, 'text length:', text.length)
 
     return {
-      text,
-      pageCount: data.numpages || 1,
+      text: text.trim() || '[PDF content could not be extracted. This may be a scanned PDF or image-based document. Please paste the text content instead.]',
+      pageCount: Math.max(1, pageCount),
       extractionMethod: 'text',
     }
   } catch (error) {
-    console.log('[v0] Text extraction failed, attempting OCR:', error)
-
-    // Fallback to OCR for scanned PDFs
-    try {
-      return await extractPDFWithOCR(buffer)
-    } catch (ocrError) {
-      console.error('[v0] OCR extraction also failed:', ocrError)
-      throw new Error('Failed to extract text from PDF: ' + (error instanceof Error ? error.message : String(error)))
-    }
-  }
-}
-
-/**
- * Extract text from PDF using OCR (Tesseract.js)
- * Best for scanned documents and images embedded in PDFs
- */
-export async function extractPDFWithOCR(buffer: Buffer): Promise<{
-  text: string
-  pageCount: number
-  extractionMethod: 'ocr'
-  confidence: number
-}> {
-  console.log('[v0] Starting OCR extraction with Tesseract')
-
-  try {
-    // Dynamic import for Tesseract
-    const Tesseract = require('tesseract.js')
-
-    // For PDF, we'd need to first convert to images
-    // This is a simplified implementation - in production you'd use pdf2image first
-    const worker = await Tesseract.createWorker()
-
-    // For now, we'll just acknowledge OCR capability
-    // Full implementation would convert PDF pages to images first
-    console.log('[v0] OCR worker created, ready for image processing')
-
-    await worker.terminate()
-
-    return {
-      text: '',
-      pageCount: 1,
-      extractionMethod: 'ocr',
-      confidence: 0,
-    }
-  } catch (error) {
-    console.error('[v0] OCR extraction failed:', error)
-    throw new Error('OCR extraction failed: ' + (error instanceof Error ? error.message : String(error)))
+    console.error('[v0] PDF extraction failed:', error)
+    throw new Error('Failed to extract text from PDF: ' + (error instanceof Error ? error.message : String(error)))
   }
 }
 
@@ -105,14 +89,13 @@ export async function processDocumentFile(buffer: Buffer, fileType: string, file
   console.log('[v0] Processing document:', fileName, 'Type:', fileType)
 
   if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
-    const { text, pageCount, extractionMethod, confidence } = await extractPDFText(buffer)
+    const { text, pageCount } = await extractPDFText(buffer)
 
     return {
       type: 'pdf',
       content: text,
       pageCount,
-      extractionMethod,
-      confidence,
+      extractionMethod: 'text',
     }
   }
 

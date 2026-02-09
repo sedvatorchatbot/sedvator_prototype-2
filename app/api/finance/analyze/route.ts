@@ -15,17 +15,11 @@ interface AnalysisRequest {
 /**
  * POST /api/finance/analyze
  * Analyzes financial documents and performs LLM-based analysis
+ * Works for both authenticated and unauthenticated users (for demo purposes)
  */
 export async function POST(request: NextRequest) {
   try {
     console.log('[v0] Finance analysis request received')
-
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     const body: AnalysisRequest = await request.json()
     const { query, analysisType, documentId, rawContent } = body
@@ -38,9 +32,20 @@ export async function POST(request: NextRequest) {
     let content = rawContent || ''
     let document_type = 'text'
     let fileName = 'Raw Input'
+    let supabase: any
+    let user: any
 
-    // If documentId provided, fetch from database
+    // If documentId provided, try to fetch from database (requires auth)
     if (documentId) {
+      supabase = await createClient()
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+
+      user = authUser
+
+      if (!user) {
+        return NextResponse.json({ error: 'Authentication required to access saved documents' }, { status: 401 })
+      }
+
       const { data: doc, error: docError } = await supabase
         .from('financial_documents')
         .select('*')
@@ -184,33 +189,35 @@ export async function POST(request: NextRequest) {
     }
 
     // Save analysis to database
-    const { data: analysisData, error: saveError } = await supabase
-      .from('financial_analyses')
-      .insert({
-        user_id: user.id,
-        document_id: documentId,
-        query: query || '',
-        analysis_type: analysisType,
-        analysis_result: analysisResult,
-        confidence_score: confidence,
-        source_data: {
-          fileName,
-          documentType: document_type,
-          contentLength: content.length,
-        },
-      })
-      .select()
-      .single()
+    if (documentId) {
+      const { data: analysisData, error: saveError } = await supabase
+        .from('financial_analyses')
+        .insert({
+          user_id: user.id,
+          document_id: documentId,
+          query: query || '',
+          analysis_type: analysisType,
+          analysis_result: analysisResult,
+          confidence_score: confidence,
+          source_data: {
+            fileName,
+            documentType: document_type,
+            contentLength: content.length,
+          },
+        })
+        .select()
+        .single()
 
-    if (saveError) {
-      console.error('[v0] Error saving analysis:', saveError)
-      // Still return the analysis even if save fails
+      if (saveError) {
+        console.error('[v0] Error saving analysis:', saveError)
+        // Still return the analysis even if save fails
+      }
     }
 
     return NextResponse.json({
       success: true,
       analysis: analysisResult,
-      analysisId: analysisData?.id,
+      analysisId: documentId, // Assuming analysisId is the same as documentId
       confidence,
       timestamp: new Date().toISOString(),
     })

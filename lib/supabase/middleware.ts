@@ -41,8 +41,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Redirect authenticated users away from auth pages
-  if (request.nextUrl.pathname.startsWith("/auth") && user) {
+  // Redirect authenticated users away from auth pages (except sign-up-success)
+  if (request.nextUrl.pathname.startsWith("/auth") && user && !request.nextUrl.pathname.startsWith("/auth/sign-up-success")) {
     const url = request.nextUrl.clone()
     url.pathname = "/chat"
     return NextResponse.redirect(url)

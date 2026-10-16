@@ -55,7 +55,8 @@ export function ChatInterface({
   user,
   profile,
   isGuest = false,
-}: { user: User; profile: Profile | null; isGuest?: boolean }) {
+}: { user: User | null; profile: Profile | null; isGuest?: boolean }) {
+  const userId = user?.id
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -91,7 +92,7 @@ export function ChatInterface({
 
   useEffect(() => {
     const loadHistory = async () => {
-      if (!chatHistoryEnabled) {
+      if (!chatHistoryEnabled || !userId) {
         setMessages([])
         return
       }
@@ -100,39 +101,41 @@ export function ChatInterface({
       const { data } = await supabase
         .from("chat_messages")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("created_at", { ascending: true })
         .limit(50)
 
       if (data) {
         const decryptedMessages = await Promise.all(
-          data.map(async (m) => ({
+          data.map(async (m: { id: string; role: string; content: string }) => ({
             id: m.id,
             role: m.role as "user" | "assistant",
-            content: await decryptMessage(m.content, user.id),
+            content: await decryptMessage(m.content, userId),
           })),
         )
         setMessages(decryptedMessages)
       }
     }
     loadHistory()
-  }, [user.id, chatHistoryEnabled])
+  }, [userId, chatHistoryEnabled])
 
   const toggleVoiceReply = async () => {
+    if (!userId) return
     const newValue = !voiceReplyEnabled
     setVoiceReplyEnabled(newValue)
     setVoiceEnabled(newValue)
 
     const supabase = createClient()
-    await supabase.from("profiles").update({ voice_enabled: newValue }).eq("id", user.id)
+    await supabase.from("profiles").update({ voice_enabled: newValue }).eq("id", userId)
   }
 
   const toggleChatHistory = async () => {
+    if (!userId) return
     const newValue = !chatHistoryEnabled
     setChatHistoryEnabled(newValue)
 
     const supabase = createClient()
-    await supabase.from("profiles").update({ chat_history_enabled: newValue }).eq("id", user.id)
+    await supabase.from("profiles").update({ chat_history_enabled: newValue }).eq("id", userId)
 
     if (!newValue) {
       setMessages([])
@@ -141,7 +144,7 @@ export function ChatInterface({
 
   const clearChatHistory = async () => {
     const supabase = createClient()
-    await supabase.from("chat_messages").delete().eq("user_id", user.id)
+    await supabase.from("chat_messages").delete().eq("user_id", userId)
     setMessages([])
     setShowClearConfirm(false)
   }
@@ -207,14 +210,14 @@ export function ChatInterface({
 
         setMessages((prev) => [...prev, assistantMessage])
 
-        if (chatHistoryEnabled) {
+        if (chatHistoryEnabled && userId) {
           const supabase = createClient()
-          const encryptedUserMessage = await encryptMessage(messageText, user.id)
-          const encryptedAssistantMessage = await encryptMessage(data.response, user.id)
+          const encryptedUserMessage = await encryptMessage(messageText, userId)
+          const encryptedAssistantMessage = await encryptMessage(data.response, userId)
 
           await supabase.from("chat_messages").insert([
-            { user_id: user.id, role: "user", content: encryptedUserMessage },
-            { user_id: user.id, role: "assistant", content: encryptedAssistantMessage },
+            { user_id: userId, role: "user", content: encryptedUserMessage },
+            { user_id: userId, role: "assistant", content: encryptedAssistantMessage },
           ])
         }
 
@@ -237,7 +240,7 @@ export function ChatInterface({
       input,
       isLoading,
       messages,
-      user.id,
+      userId,
       userProfile?.grade,
       userProfile?.subjects,
       voiceReplyEnabled,
@@ -421,7 +424,8 @@ export function ChatInterface({
 
   const handleOnboardingComplete = async (grade: string, subjects: string[]) => {
     const supabase = createClient()
-    await supabase.from("profiles").update({ grade, subjects }).eq("id", user.id)
+    if (!userId) return
+    await supabase.from("profiles").update({ grade, subjects }).eq("id", userId)
     setUserProfile((prev) => (prev ? { ...prev, grade, subjects } : null))
     setShowOnboarding(false)
   }

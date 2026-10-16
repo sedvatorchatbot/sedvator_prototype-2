@@ -47,9 +47,9 @@ export default function LoginPage() {
         throw new Error(data.error || "Login failed")
       }
 
-      // The API response sets the Supabase session cookies. Navigate once so
-      // the server and proxy read the new session consistently.
-      router.replace(redirectTo)
+      // Perform a full navigation so the server and proxy read the newly-set
+      // Supabase cookies before rendering the protected destination.
+      window.location.assign(redirectTo)
     } catch (error: unknown) {
       console.error("[v0] Login error:", error)
       const errorMessage = error instanceof Error ? error.message : "An error occurred during login"

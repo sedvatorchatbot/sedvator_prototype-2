@@ -16,7 +16,7 @@ interface OnboardingModalProps {
   isOpen: boolean
   onComplete: (grade: string, subjects: string[]) => void
   onClose: () => void
-  user: User
+  user: User | null
   initialGrade?: string
   initialSubjects?: string[]
   chatHistoryEnabled?: boolean
@@ -99,11 +99,13 @@ export function OnboardingModal({
     if (onChatHistoryToggle) {
       onChatHistoryToggle(enabled)
     }
+    if (!user) return
     const supabase = createClient()
     await supabase.from("profiles").update({ chat_history_enabled: enabled }).eq("id", user.id)
   }
 
   const handleClearHistory = async () => {
+    if (!user) return
     const supabase = createClient()
     await supabase.from("chat_messages").delete().eq("user_id", user.id)
     if (onClearHistory) {

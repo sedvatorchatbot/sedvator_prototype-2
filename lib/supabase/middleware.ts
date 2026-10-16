@@ -41,8 +41,9 @@ export async function updateSession(request: NextRequest) {
     console.error("Supabase auth error:", error)
   }
 
-  // Protect /chat and /routine routes
-  if ((request.nextUrl.pathname.startsWith("/chat") || request.nextUrl.pathname.startsWith("/routine")) && !user) {
+  // Chat supports guest access; keep routines account-only because they persist
+  // user-specific schedules and reminders.
+  if (request.nextUrl.pathname.startsWith("/routine") && !user) {
     const url = request.nextUrl.clone()
     url.pathname = "/auth/login"
     return NextResponse.redirect(url)

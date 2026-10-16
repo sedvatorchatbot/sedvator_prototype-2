@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Brain, Zap, FileText, Trophy, Plus, ArrowLeft, Upload, Gamepad2, Puzzle, Target, Sparkles, BookOpen } from "lucide-react"
+import { Brain, Zap, FileText, Trophy, Plus, ArrowLeft, Upload, Gamepad2, Puzzle, Target, Sparkles, BookOpen, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { QuizGame } from "./quiz-game"
 import { SpeedQuiz } from "./speed-quiz"
@@ -17,6 +17,7 @@ import { FlashcardGame } from "./flashcard-game"
 import { WordMatchGame } from "./word-match-game"
 import { MemoryMatchGame } from "./memory-match-game"
 import { FillBlanksGame } from "./fill-blanks-game"
+import { GeniusGuesser } from "./genius-guesser"
 
 interface Quiz {
   id: string
@@ -72,6 +73,21 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
   const [generationError, setGenerationError] = useState<string | null>(null)
   const [localQuizzes, setLocalQuizzes] = useState(quizzes)
   const [localFlashcards, setLocalFlashcards] = useState(flashcardSets)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const deleteGenerated = async (type: "quizzes" | "flashcards", id: string) => {
+    if (!window.confirm("Delete this generated item permanently?")) return
+    setDeleteError(null)
+    try {
+      const response = await fetch(`/api/study-content/${type}/${id}`, { method: "DELETE" })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || "Delete failed")
+      if (type === "quizzes") setLocalQuizzes((items) => items.filter((item) => item.id !== id))
+      else setLocalFlashcards((items) => items.filter((item) => item.id !== id))
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Unable to delete this item")
+    }
+  }
 
   useEffect(() => {
     const tab = searchParams.get("tab")
@@ -221,6 +237,10 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
     )
   }
 
+  if (activeGame === "genius-guesser" && selectedFlashcards) {
+    return <GeniusGuesser flashcardSet={selectedFlashcards} onBack={() => { setActiveGame(null); setSelectedFlashcards(null) }} />
+  }
+
   if (activeGame === "fill-blanks" && selectedQuiz) {
     return (
       <FillBlanksGame
@@ -251,9 +271,9 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
           </div>
         </div>
 
-        {generationError && (
+        {(generationError || deleteError) && (
           <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {generationError}
+            {generationError || deleteError}
           </div>
         )}
 
@@ -430,8 +450,9 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
                 {localQuizzes.map((quiz) => (
                   <Card key={quiz.id} className="border-primary/20 bg-card hover:border-primary/40 transition-colors">
                     <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <CardTitle className="text-lg text-foreground">{quiz.title}</CardTitle>
+                        <Button variant="ghost" size="icon" aria-label={`Delete ${quiz.title}`} onClick={() => deleteGenerated("quizzes", quiz.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         {quiz.difficulty && (
                           <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary capitalize">
                             {quiz.difficulty}
@@ -485,7 +506,7 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
                 {localFlashcards.map((set) => (
                   <Card key={set.id} className="border-accent/20 bg-card hover:border-accent/40 transition-colors">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-lg text-foreground">{set.title}</CardTitle>
+                      <div className="flex items-center justify-between gap-2"><CardTitle className="text-lg text-foreground">{set.title}</CardTitle><Button variant="ghost" size="icon" aria-label={`Delete ${set.title}`} onClick={() => deleteGenerated("flashcards", set.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></div>
                       <CardDescription>{set.cards?.length || 0} cards</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -645,6 +666,11 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
                 </CardContent>
               </Card>
             </div>
+
+            <Card className="border-cyan-500/30 bg-card hover:border-cyan-500/60 transition-colors">
+              <CardHeader className="pb-2"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-cyan-500/20"><Brain className="h-6 w-6 text-cyan-400" /></div><div><CardTitle className="text-lg text-foreground">Genius Guesser</CardTitle><CardDescription>Wordle-style topic challenge</CardDescription></div></div></CardHeader>
+              <CardContent><p className="text-sm text-muted-foreground mb-4">Guess a topic-related word in seven attempts using the keyboard.</p>{localFlashcards.length > 0 ? <Select onValueChange={(value) => { const set = localFlashcards.find((item) => item.id === value); if (set) { setSelectedFlashcards(set); setActiveGame("genius-guesser") } }}><SelectTrigger className="bg-input"><SelectValue placeholder="Select a flashcard set" /></SelectTrigger><SelectContent>{localFlashcards.map((set) => <SelectItem key={set.id} value={set.id}>{set.title}</SelectItem>)}</SelectContent></Select> : <p className="text-sm text-muted-foreground text-center py-2">Create flashcards to play</p>}</CardContent>
+            </Card>
 
             {/* Quick Tips */}
             <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">

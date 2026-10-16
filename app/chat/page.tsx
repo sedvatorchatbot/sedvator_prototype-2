@@ -12,31 +12,28 @@ export default async function ChatPage() {
 
   let profile = null
 
-  // Only fetch profile if user is authenticated
+  // Always ensure a profile exists before rendering onboarding. The auth trigger
+  // normally creates it, but upsert also handles users created before the trigger
+  // was installed or a delayed trigger in a fresh Supabase project.
   if (user && !isGuest) {
-    const { data: existingProfile } = await supabase
+    const { data: ensuredProfile, error: profileError } = await supabase
       .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .maybeSingle()
-
-    if (!existingProfile) {
-      const { data: newProfile } = await supabase
-        .from("profiles")
-        .insert({
+      .upsert(
+        {
           id: user.id,
-          email: user.email,
-          name: undefined,
-          grade: "",
-          subjects: [],
-          chat_history_enabled: true,
-        })
-        .select()
-        .single()
+          email: user.email ?? null,
+          display_name:
+            user.user_metadata?.display_name ?? user.email?.split("@")[0] ?? "Student",
+        },
+        { onConflict: "id" },
+      )
+      .select("*")
+      .single()
 
-      profile = newProfile
+    if (profileError) {
+      console.error("[v0] Failed to load or create profile:", profileError)
     } else {
-      profile = existingProfile
+      profile = ensuredProfile
     }
   }
 

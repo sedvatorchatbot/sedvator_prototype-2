@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import { ArrowLeft, Brain, Check, Delete, RotateCcw, Trophy, X } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { ArrowLeft, Brain, Check, Delete, Loader2, RotateCcw, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
@@ -11,10 +11,6 @@ type LetterState = "correct" | "present" | "absent" | "empty"
 const KEYBOARD = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"]
 
 function normalize(value: string) { return value.toLowerCase().replace(/[^a-z]/g, "") }
-function chooseWord(set: FlashcardSet) {
-  const candidates = set.cards.map((card) => normalize(card.term)).filter((word) => word.length >= 4 && word.length <= 8)
-  return candidates.sort((a, b) => Math.abs(a.length - 5) - Math.abs(b.length - 5))[0] || "learn"
-}
 function evaluate(guess: string, answer: string): LetterState[] {
   const states: LetterState[] = Array(answer.length).fill("absent")
   const remaining = answer.split("")
@@ -30,13 +26,48 @@ function evaluate(guess: string, answer: string): LetterState[] {
 }
 
 export function GeniusGuesser({ flashcardSet, onBack }: { flashcardSet: FlashcardSet; onBack: () => void }) {
-  const answer = useMemo(() => chooseWord(flashcardSet), [flashcardSet])
+  const [answer, setAnswer] = useState("")
   const [guesses, setGuesses] = useState<string[]>([])
   const [current, setCurrent] = useState("")
   const [message, setMessage] = useState("")
   const [complete, setComplete] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const scoreSaved = useRef(false)
   const maxAttempts = 7
-  const won = guesses.includes(answer)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setAnswer("")
+    setGuesses([])
+    setCurrent("")
+    setComplete(false)
+    setMessage("")
+    scoreSaved.current = false
+    fetch("/api/genius-guesser/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic: flashcardSet.topic || flashcardSet.title, cards: flashcardSet.cards }),
+    }).then(async (response) => {
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || "Could not generate a word")
+      if (!cancelled) setAnswer(normalize(data.answer))
+    }).catch((error) => {
+      if (!cancelled) setMessage(error instanceof Error ? error.message : "Could not generate a word")
+    }).finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [flashcardSet])
+
+  const saveScore = async (didWin: boolean, attempts: number) => {
+    if (scoreSaved.current) return
+    scoreSaved.current = true
+    try {
+      await fetch("/api/game/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+        gameType: "genius_guesser", score: didWin ? Math.max(10, (maxAttempts - attempts + 1) * 15) : 0,
+        streak: didWin ? 1 : 0, timeTaken: 0, metadata: { topic: flashcardSet.topic || flashcardSet.title, wordLength: answer.length },
+      }) })
+    } catch (error) { console.error("[v0] Failed to save Genius Guesser score", error) }
+  }
   const keyboardStates = useMemo(() => {
     const map: Record<string, LetterState> = {}
     guesses.forEach((guess) => evaluate(guess, answer).forEach((state, index) => {
@@ -49,7 +80,7 @@ export function GeniusGuesser({ flashcardSet, onBack }: { flashcardSet: Flashcar
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (complete) return
+      if (complete || loading || !answer) return
       if (/^[a-zA-Z]$/.test(event.key)) setCurrent((value) => value.length < answer.length ? value + event.key.toLowerCase() : value)
       if (event.key === "Backspace") setCurrent((value) => value.slice(0, -1))
       if (event.key === "Enter") submitGuess()
@@ -59,14 +90,17 @@ export function GeniusGuesser({ flashcardSet, onBack }: { flashcardSet: Flashcar
   })
 
   function submitGuess() {
+    if (loading || !answer) return
     if (current.length !== answer.length) { setMessage(`Enter a ${answer.length}-letter word.`); return }
     if (guesses.includes(current)) { setMessage("You already tried that word."); return }
     const next = [...guesses, current]
     setGuesses(next); setCurrent("")
-    if (current === answer) { setMessage("Genius! You found the word."); setComplete(true) }
-    else if (next.length >= maxAttempts) { setMessage(`The word was ${answer.toUpperCase()}.`); setComplete(true) }
+    if (current === answer) { setMessage("Genius! You found the word."); setComplete(true); void saveScore(true, next.length) }
+    else if (next.length >= maxAttempts) { setMessage(`The word was ${answer.toUpperCase()}.`); setComplete(true); void saveScore(false, next.length) }
     else setMessage("")
   }
+
+  if (loading || !answer) return <div className="min-h-screen bg-background p-4 md:p-8"><div className="mx-auto flex min-h-[70vh] max-w-xl items-center justify-center"><Card className="w-full"><CardContent className="flex flex-col items-center gap-3 py-12 text-center"><Loader2 className="h-8 w-8 animate-spin text-cyan-500" /><p className="text-muted-foreground">Generating a challenging {flashcardSet.topic || flashcardSet.title} word...</p>{message && <p role="alert" className="text-sm text-destructive">{message}</p>}</CardContent></Card></div></div>
 
   return <div className="min-h-screen bg-background p-4 md:p-8"><div className="mx-auto max-w-xl space-y-5">
     <div className="flex items-center justify-between"><Button variant="ghost" size="icon" onClick={onBack} aria-label="Back"><ArrowLeft /></Button><div className="text-center"><h1 className="text-2xl font-bold">Genius Guesser</h1><p className="text-sm text-muted-foreground">{flashcardSet.topic || flashcardSet.title}</p></div><div className="text-right"><p className="font-bold">{guesses.length}/{maxAttempts}</p><p className="text-xs text-muted-foreground">Guesses</p></div></div>

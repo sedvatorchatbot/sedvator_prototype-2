@@ -45,8 +45,10 @@ function hasUsableQuestions(questions: any[]): boolean {
         q.question.trim().length > 10 &&
         Array.isArray(q.options) &&
         q.options.length === 4 &&
+        new Set(q.options.map((option: unknown) => (typeof option === "string" ? option.trim().toLowerCase() : ""))).size === 4 &&
         q.options.every((option: unknown) => typeof option === "string" && option.trim().length > 2) &&
         typeof q.correctIndex === "number" &&
+        Number.isInteger(q.correctIndex) &&
         q.correctIndex >= 0 &&
         q.correctIndex < 4,
     )
@@ -82,15 +84,15 @@ export async function POST(request: Request) {
       sourceType === "pdf"
         ? `Generate ${safeQuestionCount} multiple choice questions from this material. ${difficultyPrompt}
 
-Material: ${content.slice(0, 2000)}
-
-IMPORTANT: Return ONLY valid JSON array. No markdown. No extra text.
-Format: [{"question":"Q?","options":["A","B","C","D"],"correctIndex":0,"explanation":"Why"}]
+IMPORTANT: Return ONLY a valid JSON array. No markdown, labels, or extra text.
+You MUST generate exactly ${safeQuestionCount} questions. Every question MUST contain exactly four different, complete, topic-specific answer choices. Do not use placeholders such as "Definition A", "Option A", "Statement 1", or single letters. The correctIndex MUST be an integer from 0 to 3 and identify the one correct choice.
+Format: [{"question":"Q?","options":["Complete answer 1","Complete answer 2","Complete answer 3","Complete answer 4"],"correctIndex":0,"explanation":"Why"}]
 For math: calculate correctly (e.g., 8+4+3=15).`
         : `Generate ${safeQuestionCount} multiple choice questions about "${topic}". ${difficultyPrompt}
 
-IMPORTANT: Return ONLY valid JSON array. No markdown. No extra text.
-Format: [{"question":"Q?","options":["A","B","C","D"],"correctIndex":0,"explanation":"Why"}]
+IMPORTANT: Return ONLY a valid JSON array. No markdown, labels, or extra text.
+You MUST generate exactly ${safeQuestionCount} questions. Every question MUST contain exactly four different, complete, topic-specific answer choices. Do not use placeholders such as "Definition A", "Option A", "Statement 1", or single letters. The correctIndex MUST be an integer from 0 to 3 and identify the one correct choice.
+Format: [{"question":"Q?","options":["Complete answer 1","Complete answer 2","Complete answer 3","Complete answer 4"],"correctIndex":0,"explanation":"Why"}]
 For math: calculate correctly (e.g., 8+4+3=15).`
 
     const response = await generateWithAI(prompt)
@@ -106,18 +108,20 @@ For math: calculate correctly (e.g., 8+4+3=15).`
     if (!hasUsableQuestions(questions)) {
       const retryPrompt = `${prompt}
 
-Your previous response was unusable. Regenerate every question with four complete, distinct answer choices.
-Never use placeholders such as "Definition A", "Statement 1", "Option A", or letters alone.
-The correctIndex must point to the one correct choice. Return only the JSON array.`
-      try {
-        questions = JSON.parse(sanitizeJSON(await generateWithAI(retryPrompt)))
-      } catch (retryError) {
-        console.error("[v0] Quiz retry failed:", retryError)
+The previous output failed validation. Start over and return exactly ${safeQuestionCount} objects.
+Before responding, verify that every object has exactly four unique, complete answer strings and an integer correctIndex from 0 to 3. Return only the JSON array.`
+      for (let attempt = 0; attempt < 2 && !hasUsableQuestions(questions); attempt += 1) {
+        try {
+          const retryResponse = await generateWithAI(`${retryPrompt}\nRetry ${attempt + 1}: do not include any placeholder answer text.`)
+          questions = JSON.parse(sanitizeJSON(retryResponse))
+        } catch (retryError) {
+          console.error(`[v0] Quiz retry ${attempt + 1} failed:`, retryError)
+        }
       }
     }
 
     if (!hasUsableQuestions(questions)) {
-      throw new Error("The quiz generator returned incomplete answer choices. Please try again.")
+      throw new Error("The quiz generator could not produce four valid answer choices. Please try again.")
     }
 
     questions = questions.slice(0, safeQuestionCount).map((q: any) => ({

@@ -34,8 +34,10 @@ const GRADES = [
   "12th Grade",
   "BBA",
   "BCA",
-  "M.Sc",
-  "B.Sc",
+ "M.Sc",
+ "B.Sc",
+ "B.Tech",
+ "M.Tech",
 ]
 
 const SUBJECTS = [

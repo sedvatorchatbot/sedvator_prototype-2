@@ -2,6 +2,18 @@ import { createClient } from "@/lib/supabase/server"
 import { generateWithAI } from "@/lib/ai-provider"
 import { NextResponse } from "next/server"
 
+function toPlainText(value: unknown) {
+  return String(value ?? "")
+    .replace(/\\\\([a-zA-Z]+)/g, "$1")
+    .replace(/\\\\/g, "")
+    .replace(/[{}]/g, "")
+    .replace(/\^\{([^}]+)\}/g, "^$1")
+    .replace(/_\{([^}]+)\}/g, "_$1")
+    .replace(/\\s+/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim()
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
@@ -27,13 +39,23 @@ export async function POST(request: Request) {
     const difficultyPrompt =
       difficultyInstructions[difficulty as keyof typeof difficultyInstructions] || difficultyInstructions.intermediate
 
+    const formattingRules = `
+IMPORTANT WRITING RULES:
+- Write for a student, using plain, natural language.
+- Do not use LaTeX, backslashes, slash commands, underscores, or raw computer notation.
+- Avoid dense symbolic formulas and unnecessary punctuation.
+- If a formula or code expression is essential, explain it in words first and use readable inline text only.
+- Keep each definition concise: 1 to 3 clear sentences.
+- Use normal capitalization and punctuation; do not return markdown.
+`
+
     const prompt =
       sourceType === "pdf"
         ? `Based on the following study material, generate ${cardCount} flashcards for memorization.
 
 Difficulty Level: ${difficulty.toUpperCase()}
 ${difficultyPrompt}
-
+${formattingRules}
 Study Material:
 ${content}
 
@@ -41,21 +63,21 @@ Return ONLY a valid JSON array with this exact format, no other text:
 [
   {
     "term": "Key term or concept",
-    "definition": "Clear, concise definition or explanation"
+    "definition": "Clear, concise explanation in plain language"
   }
 ]`
         : `Generate ${cardCount} flashcards about: ${topic}
 
 Difficulty Level: ${difficulty.toUpperCase()}
 ${difficultyPrompt}
-
+${formattingRules}
 The flashcards should be educational and help students memorize key concepts.
 
 Return ONLY a valid JSON array with this exact format, no other text:
 [
   {
     "term": "Key term or concept",
-    "definition": "Clear, concise definition or explanation"
+    "definition": "Clear, concise explanation in plain language"
   }
 ]`
 
@@ -66,7 +88,10 @@ Return ONLY a valid JSON array with this exact format, no other text:
       throw new Error("Failed to parse flashcards")
     }
 
-    const cards = JSON.parse(jsonMatch[0])
+    const cards = JSON.parse(jsonMatch[0]).map((card: { term?: unknown; definition?: unknown }) => ({
+      term: toPlainText(card.term),
+      definition: toPlainText(card.definition),
+    }))
 
     const { data: flashcardSet, error } = await supabase
       .from("flashcard_sets")

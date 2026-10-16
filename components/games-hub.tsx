@@ -69,6 +69,7 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
   const [sourceType, setSourceType] = useState<"topic" | "pdf">("topic")
   const [difficulty, setDifficulty] = useState("intermediate")
   const [loading, setLoading] = useState(false)
+  const [generationError, setGenerationError] = useState<string | null>(null)
   const [localQuizzes, setLocalQuizzes] = useState(quizzes)
   const [localFlashcards, setLocalFlashcards] = useState(flashcardSets)
 
@@ -90,6 +91,7 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
     if (!pdfContent && sourceType === "pdf") return
 
     setLoading(true)
+    setGenerationError(null)
     try {
       const res = await fetch("/api/quiz/generate", {
         method: "POST",
@@ -104,6 +106,7 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
       })
 
       const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Quiz generation failed")
       if (data.quiz) {
         setLocalQuizzes([data.quiz, ...localQuizzes])
         setSelectedQuiz(data.quiz)
@@ -114,6 +117,7 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
       }
     } catch (error) {
       console.error("Failed to create quiz:", error)
+      setGenerationError(error instanceof Error ? error.message : "Quiz generation failed")
     } finally {
       setLoading(false)
     }
@@ -124,6 +128,7 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
     if (!pdfContent && sourceType === "pdf") return
 
     setLoading(true)
+    setGenerationError(null)
     try {
       const res = await fetch("/api/flashcards/generate", {
         method: "POST",
@@ -138,6 +143,7 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
       })
 
       const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Flashcard generation failed")
       if (data.flashcardSet) {
         setLocalFlashcards([data.flashcardSet, ...localFlashcards])
         setSelectedFlashcards(data.flashcardSet)
@@ -148,6 +154,7 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
       }
     } catch (error) {
       console.error("Failed to create flashcards:", error)
+      setGenerationError(error instanceof Error ? error.message : "Flashcard generation failed")
     } finally {
       setLoading(false)
     }
@@ -243,6 +250,12 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
             </div>
           </div>
         </div>
+
+        {generationError && (
+          <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {generationError}
+          </div>
+        )}
 
         {/* Create New Section */}
         {isCreating ? (

@@ -10,7 +10,7 @@ export default async function RoutinePage() {
   } = await supabase.auth.getUser()
 
   if (error || !user) {
-    redirect("/auth/login")
+    redirect(`/auth/login?redirectTo=${encodeURIComponent("/routine")}`)
   }
 
   // Get user profile

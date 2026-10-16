@@ -49,10 +49,13 @@ export function FillBlanksGame({ quiz, onBack }: FillBlanksGameProps) {
     quiz.questions.forEach((q) => {
       const correctAnswer = q.options[q.correctIndex]
       // Find a significant word to blank out (longer than 3 chars)
-      const words = correctAnswer.split(" ").filter((w) => w.length > 3)
-      if (words.length > 0) {
+      const words = correctAnswer
+        .split(/\s+/)
+        .map((word) => word.replace(/[^a-z0-9-]/gi, ""))
+        .filter((word) => word.length > 3)
+      if (words.length > 0 && !/^(statement|option|definition|application)\s*[a-d0-9]+$/i.test(correctAnswer)) {
         const wordToBlank = words[Math.floor(Math.random() * words.length)]
-        const blankedSentence = correctAnswer.replace(wordToBlank, "_____")
+        const blankedSentence = correctAnswer.replace(new RegExp(`\\b${wordToBlank}\\b`, "i"), "_____")
         blanks.push({
           original: correctAnswer,
           blankedWord: wordToBlank.toLowerCase().replace(/[^a-z0-9]/gi, ""),

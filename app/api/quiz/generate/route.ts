@@ -91,12 +91,14 @@ export async function POST(request: Request) {
 Material: ${content.slice(0, 2000)}
 
 IMPORTANT: Return ONLY valid JSON array. No markdown. No extra text.
-Format: [{"question":"Q?","options":["A","B","C","D"],"correctIndex":0,"explanation":"Why"}]
+Each option must be a complete, distinct, factually meaningful answer. Never use placeholders like "Statement 1", "Option A", "Definition A", or "Application A". The correct answer must appear verbatim in options and correctIndex must identify it.
+Format: [{"question":"Q?","options":["A complete answer","A plausible distractor","Another plausible distractor","Another plausible distractor"],"correctIndex":0,"explanation":"Why"}]
 For math: calculate correctly (e.g., 8+4+3=15).`
         : `Generate ${safeQuestionCount} multiple choice questions about "${topic}". ${difficultyPrompt}
 
 IMPORTANT: Return ONLY valid JSON array. No markdown. No extra text.
-Format: [{"question":"Q?","options":["A","B","C","D"],"correctIndex":0,"explanation":"Why"}]
+Each option must be a complete, distinct, factually meaningful answer. Never use placeholders like "Statement 1", "Option A", "Definition A", or "Application A". The correct answer must appear verbatim in options and correctIndex must identify it.
+Format: [{"question":"Q?","options":["A complete answer","A plausible distractor","Another plausible distractor","Another plausible distractor"],"correctIndex":0,"explanation":"Why"}]
 For math: calculate correctly (e.g., 8+4+3=15).`
 
     const response = await generateAIResponse({
@@ -127,19 +129,31 @@ For math: calculate correctly (e.g., 8+4+3=15).`
           throw new Error("No valid JSON found")
         }
       } catch {
-        console.error("Using fallback quiz")
-        questions = generateFallbackQuiz(topic || "the topic", safeQuestionCount)
+        throw new Error("The AI returned invalid quiz JSON. Please try again.")
       }
     }
 
-    // Validate and fix questions
-    questions = questions.map((q: any) => ({
-      question: q.question || "Question",
-      options: Array.isArray(q.options) ? q.options.slice(0, 4) : ["A", "B", "C", "D"],
-      correctIndex:
-        typeof q.correctIndex === "number" && q.correctIndex >= 0 && q.correctIndex < 4 ? q.correctIndex : 0,
-      explanation: q.explanation || "See the correct answer above.",
-    }))
+    // Validate the model output so placeholder options never reach the game UI.
+    questions = questions
+      .map((q: any) => {
+        const options = Array.isArray(q.options)
+          ? q.options.map((option: unknown) => String(option).trim()).filter(Boolean).slice(0, 4)
+          : []
+        const correctIndex = typeof q.correctIndex === "number" ? q.correctIndex : -1
+        const hasPlaceholders = (options as string[]).some((option: string) => /^(statement|option|definition|application)\s*[a-d0-9]+$/i.test(option))
+        if (!q.question || options.length !== 4 || correctIndex < 0 || correctIndex >= 4 || hasPlaceholders) return null
+        return {
+          question: String(q.question).trim(),
+          options,
+          correctIndex,
+          explanation: String(q.explanation || "See the correct answer above.").trim(),
+        }
+      })
+      .filter(Boolean)
+
+    if (!questions.length) {
+      throw new Error("The AI returned unusable quiz questions. Please try again.")
+    }
 
     // Save quiz to database
     const { data: quiz, error } = await supabase

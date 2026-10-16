@@ -9,7 +9,7 @@ export default async function GamesPage() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect("/auth/login?redirectTo=/games")
+    redirect(`/auth/login?redirectTo=${encodeURIComponent("/games")}`)
   }
 
   // Fetch user's quizzes and flashcard sets

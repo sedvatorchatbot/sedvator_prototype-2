@@ -3,7 +3,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { JarvisAvatar } from "@/components/jarvis-avatar"
 import { AnimatedLogo } from "@/components/animated-logo"
-import { MessageSquare, Search, Brain, Calendar, Gamepad2, TrendingUp } from "lucide-react"
+import { MessageSquare, Search, Brain, Calendar, Gamepad2 } from "lucide-react"
 import { LightningCursor } from "@/components/lightning-cursor"
 import { ThemeToggle } from "@/components/theme-toggle"
 
@@ -26,13 +26,6 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             <ThemeToggle />
-            <Link href="/finance">
-              <Button variant="ghost" size="sm" className="text-xs sm:text-sm text-muted-foreground hover:text-foreground">
-                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Finance</span>
-                <span className="sm:hidden">Finance</span>
-              </Button>
-            </Link>
             <Link href="/games">
               <Button variant="ghost" size="sm" className="text-xs sm:text-sm text-muted-foreground hover:text-foreground">
                 <Gamepad2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
@@ -136,44 +129,10 @@ export default function LandingPage() {
               description="Generate personalized study schedules and set reminders to stay on track."
             />
             <FeatureCard
-              icon={<TrendingUp className="w-6 h-6" />}
-              title="Finance Analysis"
-              description="Upload financial documents and analyze data with AI. Extract metrics, summaries, and insights from PDFs, CSV, or JSON."
-            />
-            <FeatureCard
               icon={<Gamepad2 className="w-6 h-6" />}
               title="Games & Quizzes"
               description="Learn through fun! Play quizzes, flashcards, memory games, word matching, and more to reinforce your knowledge."
             />
-          </div>
-        </div>
-      </section>
-
-      {/* Finance CTA Section */}
-      <section className="py-12 sm:py-16 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-gradient-to-br from-cyan-500/10 to-emerald-600/10 border border-cyan-500/20 rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-12">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8">
-              <div className="text-center md:text-left w-full md:w-auto">
-                <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
-                  <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-cyan-400 flex-shrink-0" />
-                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">Smart Data Analysis</h2>
-                </div>
-                <p className="text-xs sm:text-sm text-muted-foreground max-w-xl">
-                  Upload financial documents, datasets, or market data. Get AI-powered summaries, metrics extraction, and intelligent insights in seconds.
-                </p>
-              </div>
-              <Link href="/finance" className="w-full md:w-auto">
-                <Button
-                  size="lg"
-                  className="w-full md:w-auto bg-gradient-to-r from-cyan-500 to-emerald-600 hover:from-cyan-600 hover:to-emerald-700 text-white px-6 sm:px-8 whitespace-nowrap"
-                >
-                  <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  <span className="hidden sm:inline">Analyze Data</span>
-                  <span className="sm:hidden">Analyze</span>
-                </Button>
-              </Link>
-            </div>
           </div>
         </div>
       </section>

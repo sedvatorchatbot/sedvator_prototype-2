@@ -75,10 +75,19 @@ export async function POST(request: Request) {
         .eq('id', attempt.mock_test_id)
         .single()
 
-      const { data: questions } = await supabase
+      const { data: questionsData } = await supabase
         .from('mock_questions')
         .select('*')
         .eq('mock_test_id', attempt.mock_test_id)
+
+      const questions = (questionsData ?? []) as Array<{
+        id: string
+        correct_options: string[]
+        marks: number
+        negative_marks: number
+        subject: string
+        difficulty: string
+      }>
 
       const markingScheme = mockTest.marking_scheme
 
@@ -87,7 +96,7 @@ export async function POST(request: Request) {
       let totalUnattempted = 0
       let totalObtainedMarks = 0
 
-      const responseMap = new Map(responses.map((r: any) => [r.questionId, r.selectedOptions]))
+      const responseMap = new Map<string, string[]>(responses.map((r: any) => [r.questionId, r.selectedOptions ?? []]))
 
       for (const question of questions) {
         const selectedOptions = responseMap.get(question.id) || []

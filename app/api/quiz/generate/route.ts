@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
-import { generateWithAI } from "@/lib/ai-provider"
+import { generateAIResponse } from "@/lib/ai-provider"
 import { NextResponse } from "next/server"
 
 function sanitizeJSON(str: string): string {
@@ -99,7 +99,11 @@ IMPORTANT: Return ONLY valid JSON array. No markdown. No extra text.
 Format: [{"question":"Q?","options":["A","B","C","D"],"correctIndex":0,"explanation":"Why"}]
 For math: calculate correctly (e.g., 8+4+3=15).`
 
-    const response = await generateWithAI(prompt, { temperature: 0.2 })
+    const response = await generateAIResponse({
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.2,
+      maxTokens: 2048,
+    })
 
     let questions: any[]
 

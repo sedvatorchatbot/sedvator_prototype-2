@@ -125,11 +125,11 @@ export function AnalysisResults({ results, analysisType, confidence = 0.75 }: An
               <p className="text-sm text-muted-foreground leading-relaxed">{results.answer}</p>
             </div>
 
-            {results.relevantExcerpt && (
+            {(results as typeof results & { relevantExcerpt?: string }).relevantExcerpt && (
               <div className="border-t border-border pt-3">
                 <p className="text-xs font-semibold text-muted-foreground mb-1">RELEVANT EXCERPT</p>
                 <p className="text-xs text-muted-foreground bg-background p-2 rounded border border-border italic">
-                  "{results.relevantExcerpt}"
+                  "{(results as typeof results & { relevantExcerpt?: string }).relevantExcerpt}"
                 </p>
               </div>
             )}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import * as pdfParse from 'pdf-parse'
+import { PDFParse } from 'pdf-parse'
 import * as mammoth from 'mammoth'
 
 export const config = {
@@ -44,8 +44,10 @@ export async function POST(request: NextRequest) {
 
         if (fileType === 'application/pdf') {
           // Extract text from PDF
-          const pdf = await pdfParse(Buffer.from(uint8Array))
+          const parser = new PDFParse({ data: Buffer.from(uint8Array) })
+          const pdf = await parser.getText()
           extractedText = pdf.text
+          await parser.destroy()
         } else if (
           fileType ===
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document'

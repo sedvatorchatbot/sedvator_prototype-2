@@ -62,9 +62,10 @@ export function NotificationPermissionManager() {
         
         // Send test notification
         setTimeout(() => {
-          sendBrowserNotification('Study Reminder Enabled! 📚', {
+          sendBrowserNotification('Study Reminder Enabled!', {
             body: 'You will receive study reminders as desktop notifications',
-            icon: '/icon.svg',
+icon: '/icon.svg',
+            title: 'Study Reminder Enabled!',
           })
         }, 500)
 

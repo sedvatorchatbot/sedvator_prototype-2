@@ -83,7 +83,7 @@ export function useFinanceData(_options?: UseFinanceDataOptions) {
    */
   const getAnalysesByType = useCallback(
     (type: 'summary' | 'metrics' | 'insights' | 'qa') => {
-      return analyses.filter((a) => a.type === type)
+      return analyses.filter((a) => a.analysisType === type)
     },
     [analyses]
   )

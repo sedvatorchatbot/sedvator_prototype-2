@@ -13,7 +13,7 @@ export function LightningCursor() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const mousePos = useRef({ x: -1000, y: -1000 })
   const tiles = useRef<Tile[][]>([])
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number | undefined>(undefined)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
 
   const TILE_SIZE = 40

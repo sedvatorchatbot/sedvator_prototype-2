@@ -279,7 +279,7 @@ export function RoutineDashboard({
                               View Sessions ({sessions.length})
                             </summary>
                             <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
-                              {sessions.map((session) => (
+                              {sessions.map((session: any) => (
                                 <div
                                   key={session.id}
                                   className={`flex justify-between items-center text-xs p-2 rounded ${

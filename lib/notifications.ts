@@ -104,7 +104,7 @@ export function sendBrowserNotification(
           registration.showNotification(title, {
             icon: '/icon.svg',
             badge: '/icon.svg',
-            requireInteraction: true,
+            ...( { requireInteraction: true } as Record<string, boolean>),
             ...options,
           })
           console.log('[v0] Notification sent via Service Worker')
@@ -115,7 +115,7 @@ export function sendBrowserNotification(
             new Notification(title, {
               icon: '/icon.svg',
               badge: '/icon.svg',
-              requireInteraction: true,
+              ...( { requireInteraction: true } as Record<string, boolean>),
               ...options,
             })
           } catch (e) {
@@ -129,7 +129,7 @@ export function sendBrowserNotification(
           new Notification(title, {
             icon: '/icon.svg',
             badge: '/icon.svg',
-            requireInteraction: true,
+            ...( { requireInteraction: true } as Record<string, boolean>),
             ...options,
           })
           console.log('[v0] Notification sent via direct API')
@@ -232,10 +232,11 @@ export async function setDeviceAlarm(
       
       // Try to show notification
       sendBrowserNotification(`🔔 ${title}`, {
+        title: `🔔 ${title}`,
         body: `Your study session "${title}" is starting now!`,
         icon: '/icon.svg',
         badge: '/icon.svg',
-        requireInteraction: true, // Keep notification until user interacts
+        ...( { requireInteraction: true } as Record<string, boolean>), // Keep notification until user interacts
       })
     }, delay)
 
@@ -284,10 +285,11 @@ export function startAlarmChecker(): void {
         playAlarmSound()
         
         sendBrowserNotification(`🔔 ${alarm.title}`, {
+          title: `🔔 ${alarm.title}`,
           body: `Your study session "${alarm.title}" is starting now!`,
           icon: '/icon.svg',
           badge: '/icon.svg',
-          requireInteraction: true,
+          ...( { requireInteraction: true } as Record<string, boolean>),
         })
         
         // Mark as triggered

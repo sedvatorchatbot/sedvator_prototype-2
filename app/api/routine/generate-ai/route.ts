@@ -121,8 +121,7 @@ Ensure times are in HH:MM format (24-hour). Return ONLY valid JSON.`,
     // Parse the response
     let routineData
     try {
-      const responseText =
-        typeof message === 'string' ? message : message.text || message.content || ''
+      const responseText = typeof message === 'string' ? message : String(message ?? '')
       const jsonMatch = responseText.match(/\{[\s\S]*\}/)
 
       if (!jsonMatch) {

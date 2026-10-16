@@ -28,8 +28,9 @@ interface FillBlanksGameProps {
 
 interface BlankQuestion {
   original: string
-  blankedWord: string
+  blankedWords: string[]
   sentence: string
+  hint: string
 }
 
 export function FillBlanksGame({ quiz, onBack }: FillBlanksGameProps) {
@@ -42,26 +43,42 @@ export function FillBlanksGame({ quiz, onBack }: FillBlanksGameProps) {
   const [isCorrect, setIsCorrect] = useState(false)
   const [startTime, setStartTime] = useState(0)
 
-  // Create fill-in-the-blank questions from quiz answers
+  // Turn complete answer statements into contextual prompts with 2–3 meaningful blanks.
   const createBlankQuestions = () => {
     const blanks: BlankQuestion[] = []
 
     quiz.questions.forEach((q) => {
-      const correctAnswer = q.options[q.correctIndex]
-      // Find a significant word to blank out (longer than 3 chars)
-      const words = correctAnswer.split(" ").filter((w) => w.length > 3)
-      if (words.length > 0) {
-        const wordToBlank = words[Math.floor(Math.random() * words.length)]
-        const blankedSentence = correctAnswer.replace(wordToBlank, "_____")
-        blanks.push({
-          original: correctAnswer,
-          blankedWord: wordToBlank.toLowerCase().replace(/[^a-z0-9]/gi, ""),
-          sentence: blankedSentence,
+      const correctAnswer = q.options[q.correctIndex]?.trim()
+      if (!correctAnswer) return
+
+      const words = correctAnswer.split(/\s+/)
+      const candidates = words.filter((word) => word.replace(/[^a-zA-Z]/g, "").length >= 4)
+      if (candidates.length < 2) return
+
+      const blankedWords = candidates.slice(0, Math.min(3, candidates.length)).map((word) =>
+        word.toLowerCase().replace(/[^a-z0-9]/gi, ""),
+      )
+      let candidateIndex = 0
+      const sentence = words
+        .map((word) => {
+          const normalized = word.toLowerCase().replace(/[^a-z0-9]/gi, "")
+          if (candidateIndex < blankedWords.length && normalized === blankedWords[candidateIndex]) {
+            candidateIndex += 1
+            return "_____"
+          }
+          return word
         })
-      }
+        .join(" ")
+
+      blanks.push({
+        original: correctAnswer,
+        blankedWords,
+        sentence: `${q.question} ${sentence}`,
+        hint: q.explanation?.replace(/^the correct answer is:?\s*/i, "") || "A general description of the concept in the answer.",
+      })
     })
 
-    return blanks.slice(0, 8) // Limit to 8 questions
+    return blanks.slice(0, 8)
   }
 
   useEffect(() => {
@@ -74,7 +91,12 @@ export function FillBlanksGame({ quiz, onBack }: FillBlanksGameProps) {
   }, [gameState])
 
   const handleSubmit = () => {
-    const correct = userAnswer.toLowerCase().trim() === questions[currentIndex].blankedWord.toLowerCase()
+    const answers = userAnswer
+      .split(",")
+      .map((answer) => answer.trim().toLowerCase().replace(/[^a-z0-9]/gi, ""))
+      .filter(Boolean)
+    const expected = questions[currentIndex].blankedWords
+    const correct = expected.every((word, index) => answers[index] === word) && answers.length === expected.length
     setIsCorrect(correct)
     setShowResult(true)
 
@@ -209,14 +231,24 @@ export function FillBlanksGame({ quiz, onBack }: FillBlanksGameProps) {
           </CardHeader>
           <CardContent className="space-y-6">
             <p className="text-xl text-foreground leading-relaxed">{currentQuestion.sentence}</p>
+            <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-3">
+              <p className="text-sm text-muted-foreground">
+                <span className="font-semibold text-orange-500">Hint: </span>
+                {currentQuestion.hint}
+              </p>
+            </div>
 
             {!showResult ? (
               <div className="space-y-4">
                 <Input
-                  placeholder="Type the missing word..."
+                  placeholder={`Type ${currentQuestion.blankedWords.length} answers, separated by commas...`}
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && userAnswer && handleSubmit()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.nativeEvent.isComposing && e.keyCode !== 229 && userAnswer) {
+                      handleSubmit()
+                    }
+                  }}
                   className="bg-input text-lg"
                   autoFocus
                 />
@@ -243,7 +275,7 @@ export function FillBlanksGame({ quiz, onBack }: FillBlanksGameProps) {
                     </p>
                     {!isCorrect && (
                       <p className="text-sm text-muted-foreground">
-                        The correct answer was: <span className="text-foreground">{currentQuestion.blankedWord}</span>
+                        The correct answers were: <span className="text-foreground">{currentQuestion.blankedWords.join(", ")}</span>
                       </p>
                     )}
                   </div>

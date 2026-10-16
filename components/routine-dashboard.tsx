@@ -137,13 +137,13 @@ export function RoutineDashboard({
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || "Failed to delete routine")
+        const error = await response.json().catch(() => null)
+        throw new Error(error?.error || error?.message || "Failed to delete routine")
       }
 
       // Update local state
-      setRoutines(routines.filter((r) => r.id !== routineId))
-      setReminders(reminders.filter((r) => r.routine_id !== routineId))
+      setRoutines((currentRoutines) => currentRoutines.filter((r) => r.id !== routineId))
+      setReminders((currentReminders) => currentReminders.filter((r) => r.routine_id !== routineId))
       
       alert(`Routine "${routineName}" deleted successfully!`)
     } catch (error) {

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createServerClient } from "@supabase/ssr"
 import { NextResponse } from "next/server"
 
 export async function POST(request: Request) {
@@ -9,7 +9,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    const response = NextResponse.json({ success: true })
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.headers.get("cookie")?.split("; ").map((cookie) => {
+              const [name, ...value] = cookie.split("=")
+              return { name, value: value.join("=") }
+            }) ?? []
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options)
+            })
+          },
+        },
+      },
+    )
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -25,7 +44,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No session created" }, { status: 401 })
     }
 
-    return NextResponse.json({ success: true, user: data.user })
+    return response
   } catch (error) {
     console.error("[v0] Login API error:", error)
     return NextResponse.json(

@@ -28,14 +28,11 @@ import {
   Menu,
   X,
   MoreVertical,
-  TrendingUp,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { encryptMessage, decryptMessage } from "@/lib/encryption"
-import { DataUpload } from "@/components/data-upload" // Import DataUpload component
-import { AnalysisResults } from "@/components/analysis-results" // Import AnalysisResults component
 
 interface Profile {
   id: string
@@ -76,10 +73,6 @@ export function ChatInterface({
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [isUploadingFiles, setIsUploadingFiles] = useState(false)
-  const [financeMode, setFinanceMode] = useState(false) // Declare financeMode variable
-  const [financialData, setFinancialData] = useState("") // Declare financialData variable
-  const [analysisResults, setAnalysisResults] = useState(null) // Declare analysisResults variable
-  const [isAnalyzing, setIsAnalyzing] = useState(false) // Declare isAnalyzing variable
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
@@ -767,26 +760,6 @@ export function ChatInterface({
           >
             {isListening ? <MicOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Mic className="h-4 w-4 sm:h-5 sm:w-5" />}
           </Button>
-
-            {/* Finance Button */}
-            <Link href="/finance">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-muted-foreground hover:text-foreground flex-shrink-0"
-                    >
-                      <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Finance Analysis
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </Link>
 
             {/* Send Button */}
           <TooltipProvider>

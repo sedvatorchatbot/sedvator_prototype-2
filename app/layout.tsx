@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
+import { PreviewErrorMonitor } from "@/components/preview-error-monitor"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -44,6 +45,7 @@ export default function RootLayout({
         <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
           {children}
         </ThemeProvider>
+        <PreviewErrorMonitor />
         <Analytics />
       </body>
     </html>

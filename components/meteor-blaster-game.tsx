@@ -34,7 +34,7 @@ function scramble(answer: string, id: number) {
 
 function normalize(value: string) { return value.toLowerCase().replace(/[^a-z0-9]/g, "") }
 
-export function MeteorBlasterGame({ onBack }: { onBack: () => void }) {
+export function MeteorBlasterGame({ onBack, onScoreSaved }: { onBack: () => void; onScoreSaved?: (score: number, streak: number) => void }) {
   const [phase, setPhase] = useState<"setup" | "playing" | "over">("setup")
   const [topic, setTopic] = useState("")
   const [difficulty, setDifficulty] = useState<Difficulty>("medium")
@@ -49,6 +49,7 @@ export function MeteorBlasterGame({ onBack }: { onBack: () => void }) {
   const nextId = useRef(0)
   const startedAt = useRef(0)
   const inputRef = useRef<HTMLInputElement>(null)
+  const scoreSaved = useRef(false)
   const config = difficultyConfig[difficulty]
 
   const createMeteor = useCallback(() => {
@@ -57,7 +58,7 @@ export function MeteorBlasterGame({ onBack }: { onBack: () => void }) {
     setMeteors(current => current.length >= config.max ? current : [...current, { id, question: topic ? `${baseQuestion} (${topic})` : baseQuestion, answer: baseAnswer, scrambled: scramble(baseAnswer, id), x: 8 + ((id * 37) % 82), y: -10, size: 68 + ((id * 17) % 30), rotation: -12 + ((id * 23) % 24), born: performance.now() }])
   }, [config.max, topic])
 
-  const startGame = () => { setPhase("playing"); setScore(0); setCombo(0); setLives(config.lives); setElapsed(0); setMeteors([]); nextId.current = 0; startedAt.current = performance.now(); setTimeout(createMeteor, 300); inputRef.current?.focus() }
+  const startGame = () => { scoreSaved.current = false; setPhase("playing"); setScore(0); setCombo(0); setLives(config.lives); setElapsed(0); setMeteors([]); nextId.current = 0; startedAt.current = performance.now(); setTimeout(createMeteor, 300); inputRef.current?.focus() }
 
   useEffect(() => {
     if (phase !== "playing") return
@@ -74,16 +75,37 @@ export function MeteorBlasterGame({ onBack }: { onBack: () => void }) {
     return () => { clearInterval(tick); clearInterval(spawner) }
   }, [config.spawn, config.speed, phase, createMeteor])
 
+  const saveScore = useCallback(async (finalScore: number, finalStreak: number) => {
+    try {
+      const response = await fetch("/api/game/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameType: "meteor_blaster", score: finalScore, streak: finalStreak, timeTaken: elapsed, metadata: { topic, difficulty, mode } }),
+      })
+      if (!response.ok) throw new Error("Score save failed")
+      onScoreSaved?.(finalScore, finalStreak)
+    } catch (error) {
+      console.error("[v0] Failed to save Meteor Blaster score", error)
+    }
+  }, [difficulty, elapsed, mode, onScoreSaved, topic])
+
   const submitAnswer = () => {
     const value = normalize(answer)
     if (!value || phase !== "playing") return
     const target = meteors.find(meteor => normalize(meteor.answer) === value)
     if (!target) { setCombo(0); setAnswer(""); return }
     setMeteors(current => current.filter(meteor => meteor.id !== target.id))
-    setScore(value.length * 10 + combo * 25); setCombo(combo + 1); setFlash(target.id); setAnswer(""); window.setTimeout(() => setFlash(null), 350); inputRef.current?.focus()
+    setScore(currentScore => currentScore + value.length * 10 + combo * 25); setCombo(combo + 1); setFlash(target.id); setAnswer(""); window.setTimeout(() => setFlash(null), 350); inputRef.current?.focus()
   }
 
   const stars = useMemo(() => Array.from({ length: 60 }, (_, index) => ({ left: `${(index * 47) % 100}%`, top: `${(index * 29) % 82}%`, delay: `${index % 7}s` })), [])
+
+  useEffect(() => {
+    if (phase === "over" && !scoreSaved.current) {
+      scoreSaved.current = true
+      void saveScore(score, combo)
+    }
+  }, [combo, phase, saveScore, score])
 
   if (phase === "setup" || phase === "over") return <main className="min-h-screen bg-[#08111f] px-4 py-6 text-[#e9f4e8]" style={{ fontFamily: "monospace" }}><div className="mx-auto max-w-5xl"><Button variant="ghost" onClick={onBack} className="mb-5 text-[#7de2d2] hover:bg-[#12243a]"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Games</Button><section className="relative overflow-hidden rounded-[2px] border-4 border-[#304b63] bg-[#0d1c2d] p-6 shadow-[8px_8px_0_#050a12] md:p-10">{stars.map((star, i) => <i key={i} className="absolute h-1 w-1 bg-[#dff8ec] opacity-70 animate-[twinkle_2.4s_ease-in-out_infinite]" style={star} />)}<div className="relative z-10 mx-auto max-w-2xl text-center"><div className="mb-5 inline-flex items-center gap-2 border-2 border-[#ff765d] bg-[#261b27] px-3 py-2 text-xs tracking-[0.35em] text-[#ff9c7b]"><Rocket className="h-4 w-4" /> METEOR BLASTER</div><h1 className="mb-2 text-4xl font-black tracking-tight text-[#ffd166] md:text-6xl" style={{ textShadow: "4px 4px #b54543" }}>WORD DEFENSE</h1><p className="mb-8 text-sm text-[#91aab6]">Type the scrambled answer before the question reaches the horizon.</p>{phase === "over" && <div className="mb-5 border-2 border-[#ff765d] bg-[#3a202a] p-3 text-[#ffac8c]">DEFENSE BREACHED — SCORE {score}</div>}<label className="mb-2 block text-left text-xs tracking-[0.2em] text-[#7de2d2]">ENTER YOUR TOPIC</label><Input value={topic} onChange={e => setTopic(e.target.value)} placeholder="e.g. C pointers, photosynthesis, calculus" className="mb-6 h-12 rounded-none border-2 border-[#426179] bg-[#071321] text-[#e9f4e8] placeholder:text-[#5e7787]" /><div className="mb-7 grid gap-5 text-left md:grid-cols-2"><div><span className="mb-2 block text-xs tracking-[0.2em] text-[#7de2d2]">DIFFICULTY</span><div className="grid grid-cols-3 gap-2">{(Object.keys(difficultyConfig) as Difficulty[]).map(level => <button key={level} onClick={() => setDifficulty(level)} className={`border-2 px-2 py-3 text-xs font-bold ${difficulty === level ? "border-[#ffd166] bg-[#4a3920] text-[#ffd166]" : "border-[#304b63] bg-[#101f30] text-[#91aab6]"}`}>{difficultyConfig[level].label}</button>)}</div></div><div><span className="mb-2 block text-xs tracking-[0.2em] text-[#7de2d2]">GAME MODE</span><div className="grid grid-cols-3 gap-2">{(["campaign", "endless", "practice"] as Mode[]).map(item => <button key={item} onClick={() => setMode(item)} className={`border-2 px-2 py-3 text-xs font-bold ${mode === item ? "border-[#7de2d2] bg-[#18383b] text-[#7de2d2]" : "border-[#304b63] bg-[#101f30] text-[#91aab6]"}`}>{item.toUpperCase()}</button>)}</div></div></div><Button onClick={startGame} className="h-14 w-full rounded-none border-4 border-[#ffd166] bg-[#e25745] text-lg font-black tracking-[0.2em] text-white shadow-[5px_5px_0_#7b2c35] hover:bg-[#f06b4c]">START MISSION <Flame className="ml-2 h-5 w-5" /></Button></div></section></div></main>
 

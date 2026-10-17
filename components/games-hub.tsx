@@ -74,7 +74,13 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
   const [generationError, setGenerationError] = useState<string | null>(null)
   const [localQuizzes, setLocalQuizzes] = useState(quizzes)
   const [localFlashcards, setLocalFlashcards] = useState(flashcardSets)
+  const [localScores, setLocalScores] = useState(topScores)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const handleScoreSaved = (score: number, streak: number) => {
+    setLocalScores((current) => [{ id: `meteor-${Date.now()}`, game_type: "meteor_blaster", score, streak, created_at: new Date().toISOString() }, ...current])
+    setActiveTab("leaderboard")
+  }
 
   const deleteGenerated = async (type: "quizzes" | "flashcards", id: string) => {
     if (!window.confirm("Delete this generated item permanently?")) return
@@ -179,7 +185,7 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
 
   // Render active game
   if (activeGame === "meteor-blaster") {
-    return <MeteorBlasterGame onBack={() => setActiveGame(null)} />
+    return <MeteorBlasterGame onBack={() => setActiveGame(null)} onScoreSaved={handleScoreSaved} />
   }
 
   if (activeGame === "quiz" && selectedQuiz) {
@@ -716,11 +722,11 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {topScores.length === 0 ? (
+                {localScores.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">Play some games to see your scores here!</p>
                 ) : (
                   <div className="space-y-3">
-                    {topScores.map((score, index) => (
+                    {localScores.map((score, index) => (
                       <div key={score.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
                         <div className="flex items-center gap-3">
                           <span className="text-xl font-bold text-primary">#{index + 1}</span>

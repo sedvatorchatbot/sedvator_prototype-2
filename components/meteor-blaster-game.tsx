@@ -72,13 +72,16 @@ export function MeteorBlasterGame({ onBack, onScoreSaved }: { onBack: () => void
     if (phase !== "playing") return
     const tick = window.setInterval(() => {
       const now = performance.now()
-      setElapsed(Math.floor((now - startedAt.current) / 1000))
+      setElapsed(previous => {
+        const next = Math.floor((now - startedAt.current) / 1000)
+        return next === previous ? previous : next
+      })
       setMeteors(current => current.flatMap(meteor => {
         const nextY = meteor.y + config.speed * 1.8
         if (nextY > 87) { setLives(value => { const next = value - 1; if (next <= 1) setPhase("over"); return next }); setCombo(0); setFlash(meteor.id); window.setTimeout(() => setFlash(null), 250); return [] }
         return [{ ...meteor, y: nextY, rotation: meteor.rotation + 0.12 }]
       }))
-    }, 50)
+    }, 100)
     const spawner = window.setInterval(createMeteor, config.spawn)
     return () => { clearInterval(tick); clearInterval(spawner) }
   }, [config.spawn, config.speed, phase, createMeteor])

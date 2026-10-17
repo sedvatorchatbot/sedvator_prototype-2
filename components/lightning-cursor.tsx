@@ -13,7 +13,6 @@ export function LightningCursor() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const mousePos = useRef({ x: -1000, y: -1000 })
   const tiles = useRef<Tile[][]>([])
-  const animationRef = useRef<number>()
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
 
   const TILE_SIZE = 40
@@ -131,11 +130,23 @@ export function LightningCursor() {
       }
     }
 
+    let animationTimer: number | undefined
+    let isVisible = !document.hidden
+
     const animate = () => {
+      animationTimer = undefined
+      if (!isVisible) return
       updateTiles()
       drawTiles()
-      animationRef.current = requestAnimationFrame(animate)
+      animationTimer = window.setTimeout(animate, 33)
     }
+
+    const handleVisibilityChange = () => {
+      isVisible = !document.hidden
+      if (isVisible && animationTimer === undefined) animate()
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
 
     const handlePointerMove = (e: PointerEvent) => {
       mousePos.current = { x: e.clientX, y: e.clientY }
@@ -175,9 +186,11 @@ export function LightningCursor() {
     window.addEventListener("touchend", handleTouchEnd)
     window.addEventListener("touchcancel", handleTouchEnd)
 
-    animationRef.current = requestAnimationFrame(animate)
+    animate()
 
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      if (animationTimer !== undefined) window.clearTimeout(animationTimer)
       window.removeEventListener("resize", resizeCanvas)
       window.removeEventListener("pointermove", handlePointerMove)
       window.removeEventListener("mousemove", handleMouseMove)
@@ -186,9 +199,6 @@ export function LightningCursor() {
       window.removeEventListener("touchmove", handleTouchMove)
       window.removeEventListener("touchend", handleTouchEnd)
       window.removeEventListener("touchcancel", handleTouchEnd)
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
     }
   }, [])
 

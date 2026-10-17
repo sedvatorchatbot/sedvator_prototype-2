@@ -18,6 +18,7 @@ import { WordMatchGame } from "./word-match-game"
 import { MemoryMatchGame } from "./memory-match-game"
 import { FillBlanksGame } from "./fill-blanks-game"
 import { GeniusGuesser } from "./genius-guesser"
+import { MeteorBlasterGame } from "./meteor-blaster-game"
 
 interface Quiz {
   id: string
@@ -177,6 +178,10 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
   }
 
   // Render active game
+  if (activeGame === "meteor-blaster") {
+    return <MeteorBlasterGame onBack={() => setActiveGame(null)} />
+  }
+
   if (activeGame === "quiz" && selectedQuiz) {
     return (
       <QuizGame
@@ -670,6 +675,11 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
             <Card className="border-cyan-500/30 bg-card hover:border-cyan-500/60 transition-colors">
               <CardHeader className="pb-2"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-cyan-500/20"><Brain className="h-6 w-6 text-cyan-400" /></div><div><CardTitle className="text-lg text-foreground">Genius Guesser</CardTitle><CardDescription>Wordle-style topic challenge</CardDescription></div></div></CardHeader>
               <CardContent><p className="text-sm text-muted-foreground mb-4">Guess a topic-related word in seven attempts using the keyboard.</p>{localFlashcards.length > 0 ? <Select onValueChange={(value) => { const set = localFlashcards.find((item) => item.id === value); if (set) { setSelectedFlashcards(set); setActiveGame("genius-guesser") } }}><SelectTrigger className="bg-input"><SelectValue placeholder="Select a flashcard set" /></SelectTrigger><SelectContent>{localFlashcards.map((set) => <SelectItem key={set.id} value={set.id}>{set.title}</SelectItem>)}</SelectContent></Select> : <p className="text-sm text-muted-foreground text-center py-2">Create flashcards to play</p>}</CardContent>
+            </Card>
+
+            <Card className="border-orange-500/40 bg-[#101a28] hover:border-orange-400/80 transition-colors">
+              <CardHeader className="pb-2"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-orange-500/20"><Zap className="h-6 w-6 text-orange-400" /></div><div><CardTitle className="text-lg text-foreground">Meteor Blaster</CardTitle><CardDescription>90s arcade word defense</CardDescription></div></div></CardHeader>
+              <CardContent><p className="text-sm text-muted-foreground mb-4">Enter any study topic, scramble answers, and blast falling questions before they hit the horizon.</p><Button className="w-full bg-orange-600 hover:bg-orange-500" onClick={() => setActiveGame("meteor-blaster")}><Zap className="mr-2 h-4 w-4" />Launch Meteor Blaster</Button></CardContent>
             </Card>
 
             {/* Quick Tips */}

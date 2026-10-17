@@ -204,3 +204,14 @@ html[data-theme="light"] {
 .animate-shake {
   animation: shake 0.3s ease-in-out;
 }
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.4); }
+}
+
+/* Lightweight CRT grain for the arcade game surface. */
+.arcade-grain {
+  background-image: radial-gradient(rgba(255,255,255,0.08) 0.7px, transparent 0.7px);
+  background-size: 4px 4px;
+}

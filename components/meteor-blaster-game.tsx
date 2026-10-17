@@ -32,6 +32,14 @@ function scramble(answer: string, id: number) {
   return chars.slice(offset).concat(chars.slice(0, offset)).join("")
 }
 
+function cleanGameText(value: string) {
+  return value
+    .replace(/[`*_~\\/]+/g, "")
+    .replace(/\s*[-–—]\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
 function normalize(value: string) { return value.toLowerCase().replace(/[^a-z0-9]/g, "") }
 
 export function MeteorBlasterGame({ onBack, onScoreSaved }: { onBack: () => void; onScoreSaved?: (score: number, streak: number) => void }) {
@@ -55,7 +63,7 @@ export function MeteorBlasterGame({ onBack, onScoreSaved }: { onBack: () => void
   const createMeteor = useCallback(() => {
     const id = nextId.current++
     const [baseQuestion, baseAnswer] = questionSeeds[id % questionSeeds.length]
-    setMeteors(current => current.length >= config.max ? current : [...current, { id, question: topic ? `${baseQuestion} (${topic})` : baseQuestion, answer: baseAnswer, scrambled: scramble(baseAnswer, id), x: 8 + ((id * 37) % 82), y: -10, size: 68 + ((id * 17) % 30), rotation: -12 + ((id * 23) % 24), born: performance.now() }])
+    setMeteors(current => current.length >= config.max ? current : [...current, { id, question: topic ? `${baseQuestion} (${cleanGameText(topic)})` : baseQuestion, answer: cleanGameText(baseAnswer), scrambled: scramble(baseAnswer, id), x: 8 + ((id * 37) % 82), y: -10, size: 68 + ((id * 17) % 30), rotation: -12 + ((id * 23) % 24), born: performance.now() }])
   }, [config.max, topic])
 
   const startGame = () => { scoreSaved.current = false; setPhase("playing"); setScore(0); setCombo(0); setLives(config.lives); setElapsed(0); setMeteors([]); nextId.current = 0; startedAt.current = performance.now(); setTimeout(createMeteor, 300); inputRef.current?.focus() }

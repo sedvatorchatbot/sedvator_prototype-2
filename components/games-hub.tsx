@@ -18,6 +18,7 @@ import { WordMatchGame } from "./word-match-game"
 import { MemoryMatchGame } from "./memory-match-game"
 import { FillBlanksGame } from "./fill-blanks-game"
 import { GeniusGuesser } from "./genius-guesser"
+import { MeteorBlasterGame } from "./meteor-blaster-game"
 
 interface Quiz {
   id: string
@@ -73,7 +74,13 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
   const [generationError, setGenerationError] = useState<string | null>(null)
   const [localQuizzes, setLocalQuizzes] = useState(quizzes)
   const [localFlashcards, setLocalFlashcards] = useState(flashcardSets)
+  const [localScores, setLocalScores] = useState(topScores)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const handleScoreSaved = (score: number, streak: number) => {
+    setLocalScores((current) => [{ id: `meteor-${Date.now()}`, game_type: "meteor_blaster", score, streak, created_at: new Date().toISOString() }, ...current])
+    setActiveTab("leaderboard")
+  }
 
   const deleteGenerated = async (type: "quizzes" | "flashcards", id: string) => {
     if (!window.confirm("Delete this generated item permanently?")) return
@@ -177,6 +184,10 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
   }
 
   // Render active game
+  if (activeGame === "meteor-blaster") {
+    return <MeteorBlasterGame onBack={() => setActiveGame(null)} onScoreSaved={handleScoreSaved} />
+  }
+
   if (activeGame === "quiz" && selectedQuiz) {
     return (
       <QuizGame
@@ -672,6 +683,11 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
               <CardContent><p className="text-sm text-muted-foreground mb-4">Guess a topic-related word in seven attempts using the keyboard.</p>{localFlashcards.length > 0 ? <Select onValueChange={(value) => { const set = localFlashcards.find((item) => item.id === value); if (set) { setSelectedFlashcards(set); setActiveGame("genius-guesser") } }}><SelectTrigger className="bg-input"><SelectValue placeholder="Select a flashcard set" /></SelectTrigger><SelectContent>{localFlashcards.map((set) => <SelectItem key={set.id} value={set.id}>{set.title}</SelectItem>)}</SelectContent></Select> : <p className="text-sm text-muted-foreground text-center py-2">Create flashcards to play</p>}</CardContent>
             </Card>
 
+            <Card className="border-orange-500/40 bg-[#101a28] hover:border-orange-400/80 transition-colors">
+              <CardHeader className="pb-2"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-orange-500/20"><Zap className="h-6 w-6 text-orange-400" /></div><div><CardTitle className="text-lg text-foreground">Meteor Blaster</CardTitle><CardDescription>90s arcade word defense</CardDescription></div></div></CardHeader>
+              <CardContent><p className="text-sm text-muted-foreground mb-4">Enter any study topic, scramble answers, and blast falling questions before they hit the horizon.</p><Button className="w-full bg-orange-600 hover:bg-orange-500" onClick={() => setActiveGame("meteor-blaster")}><Zap className="mr-2 h-4 w-4" />Launch Meteor Blaster</Button></CardContent>
+            </Card>
+
             {/* Quick Tips */}
             <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
               <CardContent className="pt-6">
@@ -706,11 +722,11 @@ export function GamesHub({ quizzes, flashcardSets, topScores }: GamesHubProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {topScores.length === 0 ? (
+                {localScores.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">Play some games to see your scores here!</p>
                 ) : (
                   <div className="space-y-3">
-                    {topScores.map((score, index) => (
+                    {localScores.map((score, index) => (
                       <div key={score.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
                         <div className="flex items-center gap-3">
                           <span className="text-xl font-bold text-primary">#{index + 1}</span>

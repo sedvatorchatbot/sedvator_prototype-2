@@ -23,8 +23,20 @@ interface FlashcardGameProps {
   onBack: () => void
 }
 
+function cleanGameText(value: unknown) {
+  return String(value ?? "")
+    .replace(/[`*_~\\/]+/g, "")
+    .replace(/\s*[-–—]\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
 export function FlashcardGame({ flashcardSet, onBack }: FlashcardGameProps) {
-  const [cards, setCards] = useState(flashcardSet.cards)
+  const [cards, setCards] = useState(() => flashcardSet.cards.map((card) => ({
+    ...card,
+    term: cleanGameText(card.term),
+    definition: cleanGameText(card.definition),
+  })))
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFlipped, setIsFlipped] = useState(false)
   const [knownCards, setKnownCards] = useState<number[]>([])

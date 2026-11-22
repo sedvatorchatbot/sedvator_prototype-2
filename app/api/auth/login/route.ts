@@ -11,8 +11,8 @@ export async function POST(request: Request) {
 
     const response = NextResponse.json({ success: true })
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      process.env.NEXT_PUBLIC_STORAGE_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_STORAGE_SUPABASE_ANON_KEY!,
       {
         cookies: {
           getAll() {

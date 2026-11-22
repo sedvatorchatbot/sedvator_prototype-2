@@ -15,7 +15,9 @@ export async function POST(request: Request) {
       email,
       password,
       options: {
-        emailRedirectTo: `${new URL(request.url).origin}/auth/callback?next=/chat`,
+        emailRedirectTo:
+          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
+          `${new URL(request.url).origin}/auth/callback`,
         data: {
           display_name: displayName || email.split("@")[0],
         },
